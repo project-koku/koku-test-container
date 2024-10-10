@@ -5,7 +5,7 @@ This is the container used for running [koku]() integration tests in Konflux. It
 
 ## Building the container ##
 
-This container is built automatically when changes are merged.
+This container is built automatically when changes pushed or tags are created.
 
 To manually build the container for local testing, run `./build.py`.
 
