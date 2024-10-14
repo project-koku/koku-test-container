@@ -9,8 +9,8 @@ import urllib.parse
 
 
 def install_oc() -> None:
-    print('Installing oc')
-    url = 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz'
+    version = '4.16'
+    url = f'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-{version}/openshift-client-linux.tar.gz'
     with urllib.request.urlopen(url) as resp:
         b_tar_data = io.BytesIO(resp.read())
 
@@ -21,7 +21,6 @@ def install_oc() -> None:
 
 
 def install_mc():
-    print('Installing mc')
     system = platform.system().lower()
     architecture = "arm64" if "arm" in platform.machine() else "amd64"
     url = f'https://dl.min.io/client/mc/release/{system}-{architecture}/mc'
