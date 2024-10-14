@@ -35,6 +35,8 @@ main() {
         components_resources_arg=($(printf -- '--no-remove-resources %s ' $COMPONENTS_W_RESOURCES))
     fi
 
+
+    # FIXME: Move to env vars from secrets and get rid of jq
     oc get secret/koku-aws -o json -n ephemeral-base | jq -r '.data' > aws-creds.json
     oc get secret/koku-gcp -o json -n ephemeral-base | jq -r '.data' > gcp-creds.json
     oc get secret/koku-oci -o json -n ephemeral-base | jq -r '.data' > oci-creds.json

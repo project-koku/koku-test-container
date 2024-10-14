@@ -1,6 +1,7 @@
 FROM registry.access.redhat.com/ubi9-minimal:9.4-1227.1726694542
 
 RUN microdnf install -y \
+    jq \
     python3.11 \
     && rm -rf /var/cache/yum/*
 
