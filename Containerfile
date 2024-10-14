@@ -16,6 +16,9 @@ RUN python3.11 -m venv "$VENV" \
     && "$PYTHON" -m pip install -U pip setuptools \
     && "$PYTHON" -m pip install -r /usr/share/container-setup/requirements.txt
 
+COPY files/install-tools.py /usr/share/container-setup/
+RUN /usr/share/container-setup/install-tools.py
+
 RUN useradd -r -m koku-test
 
 USER koku-test
