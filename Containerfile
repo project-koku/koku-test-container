@@ -24,4 +24,5 @@ RUN useradd -r -m koku-test
 
 USER koku-test
 RUN mkdir -p /home/koku-test/.config/bonfire
-WORKDIR "$VENV"
+
+WORKDIR /home/koku-test
