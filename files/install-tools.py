@@ -19,6 +19,7 @@ def install_oc() -> None:
         for member in members_to_extract:
             archive.extract(member, path='/usr/local/bin')
 
+
 def install_mc():
     print('Installing mc')
     system = platform.system().lower()
@@ -29,6 +30,7 @@ def install_mc():
         mc_path.write_bytes(resp.read())
 
     mc_path.chmod(0o0755)
+
 
 def main() -> None:
     install_oc()

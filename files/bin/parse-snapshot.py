@@ -53,9 +53,15 @@ class Snapshot(BaseModel):
 
 
 def main() -> None:
+    prefix = ""
     snapshot_str = os.environ.get("SNAPSHOT")
+    pr_number = os.environ.get("PR_NUMBER")
+    if pr_number:
+        prefix = f"pr-{pr_number}-"
+
     if snapshot_str is None:
         raise RuntimeError("SNAPSHOT environment variable wasn't declared or empty")
+
     snapshot: Snapshot = Snapshot.model_validate_json(snapshot_str)
     ret = []
     for component in snapshot.components:
@@ -70,8 +76,7 @@ def main() -> None:
             "--set-parameter",
             f"{component_name}/DBM_IMAGE={component.container_image.image}",
             "--set-parameter",
-            # FIXME: Need to get the PR number
-            f"{component_name}/DBM_IMAGE_TAG=pr-5337-{component.source.git.revision[:7]}",
+            f"{component_name}/DBM_IMAGE_TAG={prefix}{component.source.git.revision[:7]}",
             "--set-parameter",
             f"{component_name}/DBM_INVOCATION={secrets.randbelow(100)}",
         ))
