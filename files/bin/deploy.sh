@@ -35,17 +35,6 @@ main() {
         components_resources_arg=($(printf -- '--no-remove-resources %s ' $COMPONENTS_W_RESOURCES))
     fi
 
-
-    # FIXME: Move to env vars from secrets and get rid of jq
-    oc get secret/koku-aws -o json -n ephemeral-base | jq -r '.data' > aws-creds.json
-    oc get secret/koku-gcp -o json -n ephemeral-base | jq -r '.data' > gcp-creds.json
-    oc get secret/koku-oci -o json -n ephemeral-base | jq -r '.data' > oci-creds.json
-
-    AWS_CREDENTIALS_EPH=$(jq -r '."aws-credentials"' < aws-creds.json)
-    GCP_CREDENTIALS_EPH=$(jq -r '."gcp-credentials"' < gcp-creds.json)
-    OCI_CREDENTIALS_EPH=$(jq -r '."oci-credentials"' < oci-creds.json)
-    OCI_CONFIG_EPH=$(jq -r '."oci-config"' < oci-creds.json)
-
     bonfire deploy \
         --source=appsre \
         --ref-env "$ref_env" \
@@ -57,7 +46,7 @@ main() {
         --set-parameter koku/AWS_CREDENTIALS_EPH="${AWS_CREDENTIALS_EPH}" \
         --set-parameter koku/GCP_CREDENTIALS_EPH="${GCP_CREDENTIALS_EPH}" \
         --set-parameter koku/OCI_CREDENTIALS_EPH="${OCI_CREDENTIALS_EPH}" \
-        --set-parameter koku/OCI_CONFIG_EPH=${OCI_CONFIG_EPH} \
+        --set-parameter koku/OCI_CONFIG_EPH="${OCI_CONFIG_EPH}" \
         "${components_arg[@]}" \
         "${components_resources_arg[@]}" \
         "${extra_deploy_args[@]}" \
