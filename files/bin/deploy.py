@@ -70,10 +70,6 @@ def get_pr_labels(pr_number: int, owner: str = "project-koku", repo: str = "koku
     return labels
 
 
-class DeployCommand:
-    pass
-
-
 def get_component_options() -> list[str]:
     pr_number = os.environ.get("PR_NUMBER")
     snapshot_str = os.environ.get("SNAPSHOT")
@@ -102,7 +98,7 @@ def get_component_options() -> list[str]:
     return result
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("namespace", help="Reserved namespace used for deployment")
     parser.add_argument("requester", help="Pipeline run name")
@@ -118,14 +114,17 @@ def main() -> None:
     app_name = os.environ.get("APP_NAME")
     deploy_timeout = os.environ.get("DEPLOY_TIMEOUT", 900)
     ref_env = os.environ.get("REF_ENV", "insights-production")
-    deploy_frontends = os.environ.get("DEPLOY_FRONTENDS", "false")
+    deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
-    components = chain.from_iterable(("--component", component) for component in os.environ.get("COMPONENTS", "").split())
-    components_with_resources = chain.from_iterable(("--no-remove-resources", component) for component in os.environ.get("COMPONENTS_W_RESOURCES", "").split())
+    components = os.environ.get("COMPONENTS", "").split()
+    components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
+
+    components_arg = chain.from_iterable(("--component", component) for component in components)
+    components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
 
     cred_params = []
-    if app_name == "koku":
+    if "koku" in components:
         # Credentials
         aws_credentials_eph = os.environ.get("AWS_CREDENTIALS_EPH")
         gcp_credentials_eph = os.environ.get("GCP_CREDENTIALS_EPH")
@@ -149,13 +148,14 @@ def main() -> None:
         "--frontends", deploy_frontends,
         "--set-parameter", "rbac/MIN_REPLICAS=1",
         *cred_params,
-        *components,
-        *components_with_resources,
+        *components_arg,
+        *components_with_resources_arg,
         *extra_deploy_args.split(),
         *get_component_options(),
         app_name,
     ]
 
+    print(command)
     subprocess.check_call(command, env=os.environ | {"BONFIRE_NS_REQUESTER": requester})
 
 
