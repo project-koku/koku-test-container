@@ -8,7 +8,6 @@ import subprocess
 import sys
 import typing as t
 
-import urllib.request
 from itertools import chain
 
 from pydantic import BaseModel, ConfigDict, AnyUrl, Field, model_validator
@@ -57,17 +56,6 @@ class Snapshot(BaseModel):
 
     application: str
     components: list[Component]
-
-
-def get_pr_labels(pr_number: int, owner: str = "project-koku", repo: str = "koku") -> set[str]:
-    url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
-    with urllib.request.urlopen(url) as response:
-        if response.status_code == 200:
-            data = json.loads(response.read())
-
-    labels = {item["name"] for item in data["labels"]}
-
-    return labels
 
 
 def get_component_options() -> list[str]:
