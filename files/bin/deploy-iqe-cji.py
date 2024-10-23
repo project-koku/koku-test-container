@@ -3,13 +3,16 @@
 import argparse
 import json
 import os
+import pprint
 import subprocess
 import sys
 import typing as t
+import urllib.request
 
 from functools import cached_property
 from textwrap import dedent
-import urllib.request
+
+import sh
 
 from ocviapy import oc
 
@@ -111,8 +114,11 @@ class IQERunner:
 
         return get_pr_labels(self.pr_number)
 
-    @cached_property
+    @property
     def container(self) -> t.Any:
+        if self.pod is None:
+            return
+
         return oc([
             "get", "pod", self.pod,
             "--namespace", self.namespace,
@@ -135,7 +141,7 @@ class IQERunner:
             "--namespace", self.namespace,
         ]
         if self.check:
-            sys.exit(command)
+            pprint.pprint(command)
 
         result = subprocess.run(command, env=self.env, capture_output=True, text=True)
         self.pod = result.stdout
@@ -143,7 +149,10 @@ class IQERunner:
         return self.pod
 
     def follow_logs(self):
-        oc(["logs", "--namespace", self.namespace, self.pod, "--container", self.container, "--follow"])
+        return oc(
+            ["logs", "--namespace", self.namespace, self.pod, "--container", self.container, "--follow"],
+            _bg=True,
+        )
 
     def check_cji_jobs(self) -> None:
         data = oc([
@@ -169,14 +178,17 @@ class IQERunner:
 
     def run(self) -> None:
         self.run_pod()
-        # Need to background this
-        self.follow_logs()
+        log_proc = self.follow_logs()
         oc([
             "wait", "--timeout", self.iqe_cji_timeout,
             "--for", "condition=JobInvocationComplete",
             "--namespace", self.namespace,
             f"cji/{self.component_name}",
         ])
+
+        if log_proc.is_alive():
+            log_proc.terminate()
+
         self.check_cji_jobs()
 
 
