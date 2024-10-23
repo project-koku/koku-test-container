@@ -100,16 +100,15 @@ def main() -> None:
     requester = args.requester
 
     app_name = os.environ.get("APP_NAME")
-    deploy_timeout = os.environ.get("DEPLOY_TIMEOUT", 900)
-    ref_env = os.environ.get("REF_ENV", "insights-production")
-    deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
-    optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
-    extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     components = os.environ.get("COMPONENTS", "").split()
-    components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
-
     components_arg = chain.from_iterable(("--component", component) for component in components)
+    components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
+    deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
+    deploy_timeout = os.environ.get("DEPLOY_TIMEOUT", 900)
+    extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
+    optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
+    ref_env = os.environ.get("REF_ENV", "insights-production")
 
     cred_params = []
     if "koku" in components:
@@ -143,7 +142,9 @@ def main() -> None:
         app_name,
     ]
 
-    print(command)
+    print(command, flush=True)
+    print(" ".join(command), flush=True)
+
     subprocess.check_call(command, env=os.environ | {"BONFIRE_NS_REQUESTER": requester})
 
 
