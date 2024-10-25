@@ -9,6 +9,7 @@ import urllib.request
 
 from functools import cached_property
 from textwrap import dedent
+from urllib.request import HTTPError
 
 import fuzzydate
 import sh
@@ -26,9 +27,11 @@ def get_pr_labels(
         set()
 
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
-    with urllib.request.urlopen(url) as response:
-        if response.status == 200:
+    try:
+        with urllib.request.urlopen(url) as response:
             data = json.loads(response.read())
+    except HTTPError as exc:
+        sys.exit(f"Error {exc.code} retrieving {exc.url}.")
 
     labels = {item["name"] for item in data["labels"]}
 
