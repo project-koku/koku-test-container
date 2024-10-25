@@ -153,7 +153,7 @@ class IQERunner:
         if self.check:
             return 'some-pod'
 
-        result = bonfire(*command, _tee=True, _out=sys.stdout, _err=sys.stderr)
+        result = bonfire(*command, _tee=True, _env=self.env, _out=sys.stdout, _err=sys.stderr)
         self.pod = result.rstrip()
 
         return self.pod
