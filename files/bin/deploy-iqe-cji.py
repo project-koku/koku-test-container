@@ -10,6 +10,7 @@ import urllib.request
 from functools import cached_property
 from textwrap import dedent
 
+import fuzzydate
 import sh
 
 from sh import bonfire
@@ -48,7 +49,7 @@ class IQERunner:
         self.pr_number = pr_number
 
         self.component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or os.environ.get("COMPONENT_NAME")
-        self.iqe_cji_timeout = os.environ.get("IQE_CJI_TIMEOUT", "10m")
+        self.iqe_cji_timeout = fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "10min"))
         self.iqe_env = os.environ.get("IQE_ENV", "clowder_smoke")
         self.iqe_image_tag = os.environ.get("IQE_IMAGE_TAG", "")
         self.iqe_plugins = os.environ.get("IQE_PLUGINS", "")
