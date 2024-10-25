@@ -3,8 +3,6 @@
 import argparse
 import json
 import os
-import pprint
-import subprocess
 import sys
 import typing as t
 import urllib.request
@@ -14,7 +12,8 @@ from textwrap import dedent
 
 import sh
 
-from ocviapy import oc
+from sh import bonfire
+from sh import oc
 
 
 def get_pr_labels(
@@ -48,7 +47,7 @@ class IQERunner:
         self.check = check
         self.pr_number = pr_number
 
-        self.component_name = os.environ.get("BONFIRE_COMPONENT_NAME", os.environ.get("COMPONENT_NAME"))
+        self.component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or os.environ.get("COMPONENT_NAME")
         self.iqe_cji_timeout = os.environ.get("IQE_CJI_TIMEOUT", "10m")
         self.iqe_env = os.environ.get("IQE_ENV", "clowder_smoke")
         self.iqe_image_tag = os.environ.get("IQE_IMAGE_TAG", "")
@@ -127,7 +126,7 @@ class IQERunner:
 
     def run_pod(self) -> str:
         command = [
-            "bonfire", "deploy-iqe-cji", self.component_name,
+            "deploy-iqe-cji", self.component_name,
             "--marker", self.iqe_marker_expression,
             "--filter", self.iqe_filter_expression,
             "--image-tag", self.iqe_image_tag,
@@ -140,28 +139,32 @@ class IQERunner:
             *self.selenium_arg,
             "--namespace", self.namespace,
         ]
-        if self.check:
-            pprint.pprint(command)
+        print(command, flush=True)
+        print(' '.join(command), flush=True)
 
-        result = subprocess.run(command, env=self.env, capture_output=True, text=True)
-        self.pod = result.stdout
+        if self.check:
+            return 'some-pod'
+
+        result = bonfire(*command, _tee=True, _out=sys.stdout, _err=sys.stderr)
+        self.pod = result.rstrip()
 
         return self.pod
 
     def follow_logs(self):
-        return oc(
-            ["logs", "--namespace", self.namespace, self.pod, "--container", self.container, "--follow"],
-            _bg=True,
+        oc.logs(self.pod, namespace=self.namespace, container=self.container, follow=True,
+            _out=sys.stdout,
+            _err=sys.stderr,
+            _timeout=self.iqe_cji_timeout,
         )
 
     def check_cji_jobs(self) -> None:
-        data = oc([
-            "get", "--output", "json",
-            "--namespace", self.namespace,
+        data = oc.get(
             f"cji/{self.component_name}",
-        ])
-        cji = json.load(data)
-        job_map: dict = cji["status"]["jobMap"]
+            output="json",
+            namespace=self.namespace,
+        )
+        cji = json.loads(data)
+        job_map = cji["status"]["jobMap"]
         if not all(v == "Complete" for v in job_map.values()):
             print(dedent(
                 f"""
@@ -177,17 +180,20 @@ class IQERunner:
         ))
 
     def run(self) -> None:
-        self.run_pod()
-        log_proc = self.follow_logs()
-        oc([
-            "wait", "--timeout", self.iqe_cji_timeout,
-            "--for", "condition=JobInvocationComplete",
-            "--namespace", self.namespace,
-            f"cji/{self.component_name}",
-        ])
+        if "ok-to-skip-smokes" in self.pr_labels:
+            print("PR labeled to skip smoke tests")
+            return
 
-        if log_proc.is_alive():
-            log_proc.terminate()
+        self.run_pod()
+
+        try:
+            self.follow_logs()
+        except sh.TimeoutException:
+            print(f"Test exceeded timeout {self.iqe_cji_timeout}")
+            oc.delete.pod(self.pod, namespace=self.namespace, _ok_code=[0, 1])
+        except sh.ErrorReturnCode as exc:
+            print("Test command failed")
+            print(exc)
 
         self.check_cji_jobs()
 
