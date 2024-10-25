@@ -3,6 +3,7 @@
 import argparse
 import os
 import secrets
+import shlex
 import subprocess
 import sys
 import typing as t
@@ -141,8 +142,7 @@ def main() -> None:
         app_name,
     ]
 
-    print(command, flush=True)
-    print(" ".join(command), flush=True)
+    print(" ".join(shlex.quote(str(arg)) for arg in command), flush=True)
 
     subprocess.check_call(command, env=os.environ | {"BONFIRE_NS_REQUESTER": requester})
 

@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import shlex
 import sys
 import typing as t
 import urllib.request
@@ -36,6 +37,10 @@ def get_pr_labels(
     labels = {item["name"] for item in data["labels"]}
 
     return labels
+
+
+def ran(command) -> str:
+    return " ".join(shlex.quote(str(arg)) for arg in command)
 
 
 class IQERunner:
@@ -143,8 +148,7 @@ class IQERunner:
             *self.selenium_arg,
             "--namespace", self.namespace,
         ]
-        print(command, flush=True)
-        print(' '.join(command), flush=True)
+        print(ran(['bonfire'] + command), flush=True)
 
         if self.check:
             return 'some-pod'
