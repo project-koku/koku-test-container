@@ -45,9 +45,9 @@ get_iqe_pod_or_die() {
     local pod
     local ret=0
 
-    pods=($(oc_wrapper get pods -o name -n "$ns" | grep iqe)) || ret="$?"
+    pods=("$(oc_wrapper get pods -o name -n "$ns" | grep iqe)") || ret="$?"
     if [[ "$ret" -ne 0 ]]; then
-        echo "Failed to detect IQE pod in $ns" >&2 
+        echo "Failed to detect IQE pod in $ns" >&2
         echo "Available pods:"  >&2
         oc_wrapper get pods -n "$ns" >&2
         exit 1

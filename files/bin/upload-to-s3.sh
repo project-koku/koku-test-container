@@ -8,10 +8,10 @@ main() {
     local aws_default_region="${AWS_DEFAULT_REGION:-us-east-1}"
     local bucket="${BUCKET:-rh-artifacts-bucket}"
 
-    
+
     aws s3 cp --recursive /artifacts "s3://${bucket}/$(artifacts_key)" --quiet
     url="https://s3.console.aws.amazon.com/s3/buckets/${bucket}?region=${aws_default_region}&prefix=${artifacts_key}/&showversions=false"
-    echo -n ${url//'\n'}
+    echo -n "${url//'\n'}"
 
 }
 

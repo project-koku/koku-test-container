@@ -32,7 +32,7 @@ get_pod_logs() {
     # get array of pod_name:container1,container2,..,containerN for all containers in all pods
     echo "Collecting container logs..."
     local pod_containers
-    pod_containers=($(oc_wrapper get pods --ignore-not-found=true -n $ns -o "jsonpath={range .items[*]}{' '}{.metadata.name}{':'}{range .spec['containers', 'initContainers'][*]}{.name}{','}"))
+    pod_containers=("$(oc_wrapper get pods --ignore-not-found=true -n "$ns" -o "jsonpath={range .items[*]}{' '}{.metadata.name}{':'}{range .spec['containers', 'initContainers'][*]}{.name}{','}")")
 
     for pc in "${pod_containers[@]}"; do
         # https://stackoverflow.com/a/4444841
@@ -49,9 +49,9 @@ get_pod_logs() {
                 || continue
             oc_wrapper logs \
                 "$pod" \
-                -c $container \
+                -c "$container" \
                 --previous \
-                -n $ns \
+                -n "$ns" \
                 > "${logs_dir}/${POD}_${container}-previous.log" \
                 2> /dev/null \
                 || continue
