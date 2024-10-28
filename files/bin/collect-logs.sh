@@ -14,7 +14,7 @@ collect_k8s_artifacts() {
     local logs_dir="${2:?Logs dir was not provided}"
 
     mkdir -p "$logs_dir"
-    
+
     echo "Collecting events and k8s configs..."
     oc_wrapper get events -n "$ns" --sort-by='.lastTimestamp' > "${logs_dir}/oc_get_events.txt"
     oc_wrapper get all -n "$ns" -o yaml > "${logs_dir}/oc_get_all.yaml"

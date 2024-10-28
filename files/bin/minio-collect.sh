@@ -17,7 +17,7 @@ main() {
     sleep 5
 
     # Get the secret from the env
-    oc_wrapper get secret "env-$ns-minio" -o json -n "$ns" | jq -r '.data' > minio-creds.json 
+    oc_wrapper get secret "env-$ns-minio" -o json -n "$ns" | jq -r '.data' > minio-creds.json
 
     # Grab the needed creds from the secret
     local minio_access
@@ -25,7 +25,7 @@ main() {
     local minio_secret
     minio_secret=$(jq -r .secretKey < minio-creds.json | base64 -d)
     local minio_host=localhost
-    
+
     if [[ -z "$minio_access" ]] || [[ -z "$minio_secret" ]] || [[ -z "$local_svc_port" ]]; then
         echo "Failed to fetch minio connection info when running 'oc' commands"
         exit 1
