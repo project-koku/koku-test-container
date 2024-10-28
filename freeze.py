@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''Freeze container requirements for use with a final container build.'''
+"""Freeze container requirements for use with a final container build."""
 
 from __future__ import annotations
 
@@ -15,40 +15,37 @@ def run(command: str | list[str], capture_output: bool = False, container_id: No
     except subprocess.CalledProcessError as err:
         if container_id:
             if capture_output:
-                print(f'ERROR: {err.stderr}, {err.stdout}')
+                print(f"ERROR: {err.stderr}, {err.stdout}")
 
-            print(f'Stopping container {container_id}')
-            subprocess.run(['docker', 'stop', container_id])
+            print(f"Stopping container {container_id}")
+            subprocess.run(["docker", "stop", container_id])
 
         sys.exit(err.returncode)
 
 
 def main() -> None:
-    '''Main entry point.'''
+    """Main entry point."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--container-runtime', default='docker')
-    parser.add_argument('container', nargs='?', default='koku-test-container-freezer')
-    parser.add_argument('--no-cache', action='store_true')
+    parser.add_argument("--container-runtime", default="docker")
+    parser.add_argument("container", nargs="?", default="koku-test-container-freezer")
+    parser.add_argument("--no-cache", action="store_true")
 
     args = parser.parse_args()
     container_runtime = args.container_runtime
     container = args.container
     no_cache = args.no_cache
 
-    build_command = [container_runtime, 'build', '--tag', container, '--file', 'Freezer', '.']
+    build_command = [container_runtime, "build", "--tag", container, "--file", "Freezer", "."]
     if no_cache:
-        build_command.insert(2, '--no-cache')
+        build_command.insert(2, "--no-cache")
 
-    print('Building a container to freeze the requirements.')
+    print("Building a container to freeze the requirements.")
     run(build_command)
-    container_id = run([container_runtime, 'run', '--rm', '--tty', '--detach', container], capture_output=True).stdout.rstrip()
+    container_id = run([container_runtime, "run", "--rm", "--tty", "--detach", container], capture_output=True).stdout.rstrip()
 
-    print('Freezing requirements')
-    freezer_venv = '/opt/venvs/freezer'
-    command = [
-        container_runtime, 'exec', container_id,
-        'python', '-m', 'venv', freezer_venv
-    ]
+    print("Freezing requirements")
+    freezer_venv = "/opt/venvs/freezer"
+    command = [container_runtime, "exec", container_id, "python", "-m", "venv", freezer_venv]
     run(command, container_id=container_id)
 
     command = [
@@ -65,13 +62,13 @@ def main() -> None:
     ]
     freeze = run(command, capture_output=True, container_id=container_id).stdout
 
-    freeze_file = pathlib.Path('requirements/requirements.txt')
+    freeze_file = pathlib.Path("requirements/requirements.txt")
     freeze_file.write_text(freeze)
 
-    run([container_runtime, 'stop', container_id])
+    run([container_runtime, "stop", container_id])
 
-    print(f'Freezing complete. Requirements in {freeze_file} updated.')
+    print(f"Freezing complete. Requirements in {freeze_file} updated.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

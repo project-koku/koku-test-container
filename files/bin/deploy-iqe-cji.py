@@ -22,7 +22,7 @@ from sh import oc
 def get_pr_labels(
     pr_number: str,
     owner: str = "project-koku",
-    repo: str = "koku"
+    repo: str = "koku",
 ) -> set[str]:
     if not pr_number:
         set()
@@ -44,11 +44,12 @@ def ran(command) -> str:
 
 
 class IQERunner:
-    def __init__(self,
+    def __init__(
+        self,
         namespace: str,
         requester: str,
         check: bool = False,
-        pr_number: str = ""
+        pr_number: str = "",
     ) -> None:
         self.namespace = namespace
         self.requester = requester
@@ -148,10 +149,10 @@ class IQERunner:
             *self.selenium_arg,
             "--namespace", self.namespace,
         ]
-        print(ran(['bonfire'] + command), flush=True)
+        print(ran(["bonfire"] + command), flush=True)
 
         if self.check:
-            return 'some-pod'
+            return "some-pod"
 
         result = bonfire(*command, _tee=True, _env=self.env, _out=sys.stdout, _err=sys.stderr)
         self.pod = result.rstrip()
