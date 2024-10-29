@@ -1,0 +1,48 @@
+required-version = "0.7.1"
+line-length = 160
+target-version = "py311"
+preview = true
+
+[lint]
+# https://docs.astral.sh/ruff/rules/
+select = [
+    "E",    # pycodestyle
+    "F",    # PyFlakes
+    # "I",    # isort
+    "C90",  # mccabe
+
+    "T20",  # flake8-print
+    "T10",  # flake8-debugger
+    "YTT",  # flake8-2020
+    "SIM",  # flake8-simplify
+
+    "PL",      # pylint
+    "FLY",     # flynt
+    "UP",      # pyupgrade
+    "PERF",    # perflint
+    "RUF100",  # unused noqa
+    ]
+ignore = [
+    # "E501",     # line-too-long
+    "PLR0913",  # pylint.max-args
+    "PLR0914",  # pylint.max-locals
+    "PLR0915",  # pylint.max-statements
+    "PLR2004",  # pylint.magic-value-comparison
+    "PLW1510",  # pylint.subprocess-run-without-check
+    "E203",
+    "PERF203",  # try-except-in-loop
+    "T201",     # print
+    ]
+
+[lint.flake8-builtins]
+builtins-ignorelist = ["E203", "W503"]
+
+[lint.isort]
+case-sensitive = false
+force-single-line = true
+force-sort-within-sections = true
+lines-after-imports = 2
+order-by-type = false
+
+[lint.mccabe]
+max-complexity = 10
