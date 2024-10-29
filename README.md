@@ -1,4 +1,4 @@
-[![Static Badge](https://img.shields.io/badge/Quay.io-container-%23EE0000?style=for-the-badge&link=https%3A%2F%2Fquay.io%2Frepository%2Fsamdoran%2Fkoku-test-container "Container on Quay.io")](https://quay.io/repository/samdoran/koku-test-container)
+[![Static Badge](https://img.shields.io/badge/Quay.io-container-%23EE0000?style=for-the-badge&link=https%3A%2F%2Fquay.io%2Frepository%2Fproject-koku%2Fkoku-test-container "Container on Quay.io")](https://quay.io/repository/project-koku/koku-test-container)
 # koku-test-container #
 
 This is the container used for running [koku]() integration tests in Konflux. It is used by the `bonfire-tekton` pipeline.
