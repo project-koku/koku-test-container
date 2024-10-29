@@ -131,7 +131,7 @@ class IQERunner:
             "get", "pod", self.pod,
             "--namespace", self.namespace,
             "--output", "jsonpath={.status.containerStatuses[0].name}",
-        ])
+        ])  # fmt: off
 
     def run_pod(self) -> str:
         command = [
@@ -147,7 +147,7 @@ class IQERunner:
             "--cji-name", self.component_name,
             *self.selenium_arg,
             "--namespace", self.namespace,
-        ]
+        ]  # fmt: off
         print(ran(["bonfire"] + command), flush=True)
 
         if self.check:
@@ -163,7 +163,7 @@ class IQERunner:
             _out=sys.stdout,
             _err=sys.stderr,
             _timeout=self.iqe_cji_timeout,
-        )
+        )  # fmt: off
 
     def check_cji_jobs(self) -> None:
         data = oc.get(

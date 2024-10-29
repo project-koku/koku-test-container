@@ -49,17 +49,17 @@ def main() -> None:
     run(command, container_id=container_id)
 
     command = [
-        container_runtime, 'exec', container_id,
-        f'{freezer_venv}/bin/python', '-m', 'pip', 'install', '--upgrade', '--disable-pip-version-check',
-        '--requirement', '/usr/share/container-setup/requirements/requirements.in',
-        '--constraint', '/usr/share/container-setup/requirements/constraints.txt',
-    ]
+        container_runtime, "exec", container_id,
+        f"{freezer_venv}/bin/python", "-m", "pip", "install", "--upgrade", "--disable-pip-version-check",
+        "--requirement", "/usr/share/container-setup/requirements/requirements.in",
+        "--constraint", "/usr/share/container-setup/requirements/constraints.txt",
+    ]  # fmt: off
     run(command, container_id=container_id)
 
     command = [
-        container_runtime, 'exec', container_id,
-        f'{freezer_venv}/bin/python', '-m', 'pip', 'freeze', '-qqq', '--disable-pip-version-check',
-    ]
+        container_runtime, "exec", container_id,
+        f"{freezer_venv}/bin/python", "-m", "pip", "freeze", "-qqq", "--disable-pip-version-check",
+    ]  # fmt: off
     freeze = run(command, capture_output=True, container_id=container_id).stdout
 
     freeze_file = pathlib.Path("requirements/requirements.txt")

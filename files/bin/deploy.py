@@ -81,7 +81,7 @@ def get_component_options() -> list[str]:
             "--set-parameter", f"{component_name}/DBM_IMAGE={component.container_image.image}",
             "--set-parameter", f"{component_name}/DBM_IMAGE_TAG={prefix}{component.source.git.revision[:7]}",
             "--set-parameter", f"{component_name}/DBM_INVOCATION={secrets.randbelow(100)}",
-        ))
+        ))  # fmt: off
 
     return result
 
@@ -123,7 +123,7 @@ def main() -> None:
             "--set-parameter", f"koku/GCP_CREDENTIALS_EPH={gcp_credentials_eph}",
             "--set-parameter", f"koku/OCI_CREDENTIALS_EPH={oci_credentials_eph}",
             "--set-parameter", f"koku/OCI_CONFIG_EPH={oci_config_eph}",
-        ]
+        ]  # fmt: off
 
     command = [
         "bonfire", "deploy",
@@ -140,7 +140,7 @@ def main() -> None:
         *extra_deploy_args.split(),
         *get_component_options(),
         app_name,
-    ]
+    ]  # fmt: off
 
     print(" ".join(shlex.quote(str(arg)) for arg in command), flush=True)
 
