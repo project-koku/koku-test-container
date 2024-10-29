@@ -9,7 +9,6 @@ import typing as t
 import urllib.request
 
 from functools import cached_property
-from textwrap import dedent
 from urllib.request import HTTPError
 
 import fuzzydate
@@ -175,18 +174,10 @@ class IQERunner:
         cji = json.loads(data)
         job_map = cji["status"]["jobMap"]
         if not all(v == "Complete" for v in job_map.values()):
-            print(dedent(
-                f"""
-                Some jobs failed: {job_map}
-                """
-            ))
+            print(f"\nSome jobs failed: {job_map}")
             sys.exit(1)
 
-        print(dedent(
-            f"""
-                All jobs succeeded: {job_map}
-            """
-        ))
+        print(f"\nAll jobs succeeded: {job_map}")
 
     def run(self) -> None:
         if "ok-to-skip-smokes" in self.pr_labels:
