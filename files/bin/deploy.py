@@ -8,7 +8,7 @@ import shlex
 import subprocess
 import sys
 import typing as t
-import urllib
+import urllib.request
 
 from itertools import chain
 from urllib.error import HTTPError
