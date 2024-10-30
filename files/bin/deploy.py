@@ -140,7 +140,6 @@ def main() -> None:
     cred_params = []
 
     if "koku" in components:
-
         if "smokes-required" not in labels and not any(label.endswith("-smoke-tests") for label in labels):
             sys.exit("Missing smoke tests labels.")
 
@@ -173,7 +172,6 @@ def main() -> None:
         *get_component_options(pr_number),
         app_name,
     ]  # fmt: off
-
 
     if "ok-to-skip-smokes" in labels:
         print("PR labeled to skip smoke tests")
