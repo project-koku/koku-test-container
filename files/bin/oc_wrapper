@@ -6,6 +6,7 @@ import sys
 from ocviapy import oc
 from sh import ErrorReturnCode
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     args = sys.argv[1:]
