@@ -136,9 +136,14 @@ def main() -> None:
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
     pr_number = os.environ.get("PR_NUMBER", "")
-
+    labels = get_pr_labels(pr_number)
     cred_params = []
+
     if "koku" in components:
+
+        if "smokes-required" not in labels and not any(label.endswith("-smoke-tests") for label in labels):
+            sys.exit("Missing smoke tests labels.")
+
         # Credentials
         aws_credentials_eph = os.environ.get("AWS_CREDENTIALS_EPH")
         gcp_credentials_eph = os.environ.get("GCP_CREDENTIALS_EPH")
@@ -169,7 +174,7 @@ def main() -> None:
         app_name,
     ]  # fmt: off
 
-    labels = get_pr_labels(pr_number)
+
     if "ok-to-skip-smokes" in labels:
         print("PR labeled to skip smoke tests")
         return
