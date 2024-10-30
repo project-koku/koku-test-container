@@ -11,6 +11,7 @@ def main() -> None:
     parser.add_argument("--version", default="latest")
     parser.add_argument("--no-cache", action="store_true")
     parser.add_argument("--file", "-f", default="Containerfile")
+    parser.add_argument("--push", "-p", action="store_true")
 
     args = parser.parse_args()
     container_runtime = args.container_runtime
@@ -22,6 +23,9 @@ def main() -> None:
         command.insert(2, "--no-cache")
 
     subprocess.run(command, check=True)
+
+    if args.push:
+        subprocess.run(["docker", "push", tag])
 
 
 if __name__ == "__main__":
