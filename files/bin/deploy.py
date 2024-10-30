@@ -10,7 +10,11 @@ import typing as t
 
 from itertools import chain
 
-from pydantic import BaseModel, ConfigDict, AnyUrl, Field, model_validator
+from pydantic import AnyUrl
+from pydantic import BaseModel
+from pydantic import ConfigDict
+from pydantic import Field
+from pydantic import model_validator
 
 
 class Git(BaseModel):

@@ -8,7 +8,7 @@ preview = true
 select = [
     "E",    # pycodestyle
     "F",    # PyFlakes
-    # "I",    # isort
+    "I",    # isort
     "C90",  # mccabe
 
     "T20",  # flake8-print
@@ -40,8 +40,8 @@ builtins-ignorelist = ["E203", "W503"]
 [lint.isort]
 case-sensitive = false
 force-single-line = true
-force-sort-within-sections = true
 lines-after-imports = 2
+lines-between-types = 1
 order-by-type = false
 
 [lint.mccabe]

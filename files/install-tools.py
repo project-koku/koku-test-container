@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 import io
-from pathlib import Path
 import platform
 import tarfile
-import urllib.request
 import urllib.parse
+import urllib.request
 
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 
 def install_oc(output_dir: Path = Path("/usr/local/bin")) -> str:
