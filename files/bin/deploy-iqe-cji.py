@@ -184,7 +184,7 @@ class IQERunner:
             print("PR labeled to skip smoke tests")
             return
 
-        if "smokes-required" not in self.pr_labels and not any(label.endswith("-smoke-tests") for label in self.pr_labels):
+        if "smokes-required" in self.pr_labels and not any(label.endswith("-smoke-tests") for label in self.pr_labels):
             sys.exit("Missing smoke tests labels.")
 
         self.run_pod()
