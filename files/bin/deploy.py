@@ -139,7 +139,6 @@ def main() -> None:
     labels = get_pr_labels(pr_number)
     cred_params = []
 
-
     if "koku" in components:
         if "smokes-required" in labels and not any(label.endswith("-smoke-tests") for label in labels):
             sys.exit("Missing smoke tests labels.")
