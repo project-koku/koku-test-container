@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
 import argparse
+import json
 import os
 import secrets
 import shlex
 import subprocess
 import sys
 import typing as t
+import urllib
 
 from itertools import chain
+from urllib.error import HTTPError
 
 from pydantic import AnyUrl
 from pydantic import BaseModel
@@ -62,8 +65,7 @@ class Snapshot(BaseModel):
     components: list[Component]
 
 
-def get_component_options() -> list[str]:
-    pr_number = os.environ.get("PR_NUMBER")
+def get_component_options(pr_number: str) -> list[str]:
     snapshot_str = os.environ.get("SNAPSHOT")
 
     if snapshot_str is None:
@@ -98,6 +100,26 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def get_pr_labels(
+    pr_number: str,
+    owner: str = "project-koku",
+    repo: str = "koku",
+) -> set[str]:
+    if not pr_number:
+        set()
+
+    url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
+    try:
+        with urllib.request.urlopen(url) as response:
+            data = json.loads(response.read())
+    except HTTPError as exc:
+        sys.exit(f"Error {exc.code} retrieving {exc.url}.")
+
+    labels = {item["name"] for item in data["labels"]}
+
+    return labels
+
+
 def main() -> None:
     args = parse_args()
     namespace = args.namespace
@@ -113,6 +135,7 @@ def main() -> None:
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
+    pr_number = os.environ.get("PR_NUMBER", "")
 
     cred_params = []
     if "koku" in components:
@@ -142,9 +165,14 @@ def main() -> None:
         *components_arg,
         *components_with_resources_arg,
         *extra_deploy_args.split(),
-        *get_component_options(),
+        *get_component_options(pr_number),
         app_name,
     ]  # fmt: off
+
+    labels = get_pr_labels(pr_number)
+    if "ok-to-skip-smokes" in labels:
+        print("PR labeled to skip smoke tests")
+        return
 
     print(" ".join(shlex.quote(str(arg)) for arg in command), flush=True)
 
