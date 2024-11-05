@@ -99,11 +99,13 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+
 def override_timeout_based_on_label(labels: set[str]) -> str:
     if "full-run-smoke-tests" in labels:
         return "5h"
     else:
         return os.environ.get("DEPLOY_TIMEOUT", 900)
+
 
 def get_pr_labels(
     pr_number: str,

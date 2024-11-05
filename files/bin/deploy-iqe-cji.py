@@ -126,7 +126,6 @@ class IQERunner:
         if self.check:
             return set(os.environ.get("PR_LABELS", "").split()) or {"hot-fix-smoke-tests", "bug"}
 
-
     @property
     def container(self) -> t.Any:
         if self.pod is None:
