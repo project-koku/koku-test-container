@@ -57,7 +57,6 @@ class IQERunner:
         self.pr_number = pr_number
 
         self.component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or os.environ.get("COMPONENT_NAME")
-        self.iqe_cji_timeout = int(fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "10min")))
         self.iqe_env = os.environ.get("IQE_ENV", "clowder_smoke")
         self.iqe_image_tag = os.environ.get("IQE_IMAGE_TAG", "")
         self.iqe_plugins = os.environ.get("IQE_PLUGINS", "")
@@ -116,11 +115,17 @@ class IQERunner:
         return iqe_marker_expression
 
     @cached_property
+    def iqe_cji_timeout(self) -> int:
+        if "full-run-smoke-tests" in self.pr_labels:
+            return int(fuzzydate.to_seconds("5h"))
+        else:
+            return int(fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "10min")))
+
+    @cached_property
     def pr_labels(self) -> set[str]:
         if self.check:
             return set(os.environ.get("PR_LABELS", "").split()) or {"hot-fix-smoke-tests", "bug"}
 
-        return get_pr_labels(self.pr_number)
 
     @property
     def container(self) -> t.Any:

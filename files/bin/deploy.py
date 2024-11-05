@@ -99,6 +99,11 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+def override_timeout_based_on_label(labels: set[str]) -> str:
+    if "full-run-smoke-tests" in labels:
+        return "5h"
+    else:
+        return os.environ.get("DEPLOY_TIMEOUT", 900)
 
 def get_pr_labels(
     pr_number: str,
@@ -131,12 +136,12 @@ def main() -> None:
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
     deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
-    deploy_timeout = os.environ.get("DEPLOY_TIMEOUT", 900)
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
     pr_number = os.environ.get("PR_NUMBER", "")
     labels = get_pr_labels(pr_number)
+    deploy_timeout = override_timeout_based_on_label(labels)
     cred_params = []
 
     if "koku" in components:
