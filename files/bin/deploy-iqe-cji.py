@@ -57,7 +57,7 @@ class IQERunner:
         self.pr_number = pr_number
 
         self.component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or os.environ.get("COMPONENT_NAME")
-        self.iqe_cji_timeout = fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "10min"))
+        self.iqe_cji_timeout = int(fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "10min")))
         self.iqe_env = os.environ.get("IQE_ENV", "clowder_smoke")
         self.iqe_image_tag = os.environ.get("IQE_IMAGE_TAG", "")
         self.iqe_plugins = os.environ.get("IQE_PLUGINS", "")
@@ -197,6 +197,13 @@ class IQERunner:
         except sh.ErrorReturnCode as exc:
             print("Test command failed")
             print(exc)
+
+        oc([
+            "wait", "--timeout", f"{self.iqe_cji_timeout}s",
+            "--for", "condition=JobInvocationComplete",
+            "--namespace", self.namespace,
+            f"cji/{self.component_name}",
+        ])  # fmt: off
 
         self.check_cji_jobs()
 
