@@ -173,7 +173,7 @@ def main() -> None:
         "--source", "appsre",
         "--ref-env", ref_env,
         "--namespace", namespace,
-        "--timeout", deploy_timeout,
+        "--timeout", str(deploy_timeout),
         "--optional-deps-method", optional_deps_method,
         "--frontends", deploy_frontends,
         "--set-parameter", "rbac/MIN_REPLICAS=1",
