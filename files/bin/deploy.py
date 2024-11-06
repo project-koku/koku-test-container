@@ -13,6 +13,8 @@ import urllib.request
 from itertools import chain
 from urllib.error import HTTPError
 
+import fuzzydate
+
 from pydantic import AnyUrl
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -100,11 +102,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def override_timeout_based_on_label(labels: set[str]) -> str:
-    if "full-run-smoke-tests" in labels:
-        return "5h"
-    else:
-        return os.environ.get("DEPLOY_TIMEOUT", 900)
+def get_deploy_timeout(labels: set[str]) -> int:
+    try:
+        timeout = fuzzydate.to_seconds(os.environ.get("DEPLOY_TIMEOUT", "30min"))
+    except (TypeError, ValueError) as exc:
+        print(f"{exc}. Using default value of 30min")
+        timeout = 30 * 60
+
+    return int(timeout)
 
 
 def get_pr_labels(
@@ -132,18 +137,18 @@ def main() -> None:
     namespace = args.namespace
     requester = args.requester
 
+    pr_number = os.environ.get("PR_NUMBER", "")
+    labels = get_pr_labels(pr_number)
     app_name = os.environ.get("APP_NAME")
     components = os.environ.get("COMPONENTS", "").split()
     components_arg = chain.from_iterable(("--component", component) for component in components)
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
     deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
+    deploy_timeout = get_deploy_timeout(labels)
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
-    pr_number = os.environ.get("PR_NUMBER", "")
-    labels = get_pr_labels(pr_number)
-    deploy_timeout = override_timeout_based_on_label(labels)
     cred_params = []
 
     if "koku" in components:
