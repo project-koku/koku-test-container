@@ -132,6 +132,21 @@ def get_pr_labels(
     return labels
 
 
+def log_command(command: t.Sequence[t.Any], no_log_values: t.Sequence[t.Any]) -> None:
+    sanitized = []
+    redacted = "*" * 8
+    quoted = [shlex.quote(str(arg)) for arg in command]
+    for arg in quoted:
+        for value in no_log_values:
+            if value in arg:
+                sanitized.append(arg.replace(value, redacted))
+                break
+        else:
+            sanitized.append(arg)
+
+    print(" ".join(sanitized), flush=True)
+
+
 def main() -> None:
     args = parse_args()
     namespace = args.namespace
@@ -150,6 +165,7 @@ def main() -> None:
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
     cred_params = []
+    no_log_values = []
 
     if "koku" in components:
         if "smokes-required" in labels and not any(label.endswith("-smoke-tests") for label in labels):
@@ -167,6 +183,13 @@ def main() -> None:
             "--set-parameter", f"koku/OCI_CREDENTIALS_EPH={oci_credentials_eph}",
             "--set-parameter", f"koku/OCI_CONFIG_EPH={oci_config_eph}",
         ]  # fmt: off
+
+        no_log_values = [
+            aws_credentials_eph,
+            gcp_credentials_eph,
+            oci_credentials_eph,
+            oci_config_eph,
+        ]
 
     command = [
         "bonfire", "deploy",
@@ -189,7 +212,7 @@ def main() -> None:
         print("PR labeled to skip smoke tests")
         return
 
-    print(" ".join(shlex.quote(str(arg)) for arg in command), flush=True)
+    log_command(command, no_log_values)
 
     subprocess.check_call(command, env=os.environ | {"BONFIRE_NS_REQUESTER": requester})
 
