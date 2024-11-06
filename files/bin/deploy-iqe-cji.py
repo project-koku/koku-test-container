@@ -116,9 +116,14 @@ class IQERunner:
 
     @cached_property
     def iqe_cji_timeout(self) -> int:
-        timeout = fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "10min"))
+        try:
+            timeout = fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "2h"))
+        except (TypeError, ValueError) as exc:
+            print(f"{exc}. Using default value of 2h")
+            timeout = 2 * 60 * 60
+
         if "full-run-smoke-tests" in self.pr_labels:
-            timeout = fuzzydate.to_seconds("5h")
+            timeout = 5 * 60 * 60
 
         return int(timeout)
 
