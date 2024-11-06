@@ -57,7 +57,6 @@ class IQERunner:
         self.pr_number = pr_number
 
         self.component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or os.environ.get("COMPONENT_NAME")
-        self.iqe_cji_timeout = int(fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "10min")))
         self.iqe_env = os.environ.get("IQE_ENV", "clowder_smoke")
         self.iqe_image_tag = os.environ.get("IQE_IMAGE_TAG", "")
         self.iqe_plugins = os.environ.get("IQE_PLUGINS", "")
@@ -114,6 +113,19 @@ class IQERunner:
             iqe_marker_expression = "cost_required"
 
         return iqe_marker_expression
+
+    @cached_property
+    def iqe_cji_timeout(self) -> int:
+        try:
+            timeout = fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "2h"))
+        except (TypeError, ValueError) as exc:
+            print(f"{exc}. Using default value of 2h")
+            timeout = 2 * 60 * 60
+
+        if "full-run-smoke-tests" in self.pr_labels:
+            timeout = 5 * 60 * 60
+
+        return int(timeout)
 
     @cached_property
     def pr_labels(self) -> set[str]:
