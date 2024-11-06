@@ -116,10 +116,11 @@ class IQERunner:
 
     @cached_property
     def iqe_cji_timeout(self) -> int:
+        timeout = fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "10min"))
         if "full-run-smoke-tests" in self.pr_labels:
-            return int(fuzzydate.to_seconds("5h"))
-        else:
-            return int(fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "10min")))
+            timeout = fuzzydate.to_seconds("5h")
+
+        return int(timeout)
 
     @cached_property
     def pr_labels(self) -> set[str]:
