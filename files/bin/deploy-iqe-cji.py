@@ -9,6 +9,7 @@ import typing as t
 import urllib.request
 
 from functools import cached_property
+from itertools import chain
 from urllib.request import HTTPError
 
 import fuzzydate
@@ -59,6 +60,7 @@ class IQERunner:
         self.component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or os.environ.get("COMPONENT_NAME")
         self.iqe_env = os.environ.get("IQE_ENV", "clowder_smoke")
         self.iqe_image_tag = os.environ.get("IQE_IMAGE_TAG", "")
+        self.iqe_env_vars = os.environ.get("IQE_ENV_VARS", "").split()
         self.iqe_plugins = os.environ.get("IQE_PLUGINS", "")
         self.iqe_requirements = os.environ.get("IQE_REQUIREMENTS", "")
         self.iqe_requirements_priority = os.environ.get("IQE_REQUIREMENTS_PRIORITY", "")
@@ -74,14 +76,9 @@ class IQERunner:
         return os.environ | {"BONFIRE_NS_REQUESTER": self.requester}
 
     @cached_property
-    def iqe_env_vars(self) -> list[str]:
-        # ["--env-var", "KEY=VALUE", "--env-var", "KEY=VALUE"]
-        result = []
+    def iqe_env_vars_arg(self) -> list[str]:
         default = ["JOB_NAME=koku-pr-check", "BUILD_NUMBER=88888"]
-        for var in os.environ.get("IQE_ENV_VARS", default):
-            result.extend(["--env_var", var])
-
-        return result
+        return chain.from_iterable(("--env-var", var) for var in default)
 
     @cached_property
     def iqe_filter_expression(self) -> str:
@@ -168,7 +165,7 @@ class IQERunner:
             "--env", self.iqe_env,
             "--cji-name", self.component_name,
             *self.selenium_arg,
-            *self.iqe_env_vars,
+            *self.iqe_env_vars_arg,
             "--namespace", self.namespace,
         ]  # fmt: off
         print(ran(["bonfire"] + command), flush=True)
