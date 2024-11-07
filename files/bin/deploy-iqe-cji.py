@@ -74,6 +74,16 @@ class IQERunner:
         return os.environ | {"BONFIRE_NS_REQUESTER": self.requester}
 
     @cached_property
+    def iqe_env_vars(self) -> list[str]:
+        # ["--env-var", "KEY=VALUE", "--env-var", "KEY=VALUE"]
+        result = []
+        default = ["JOB_NAME=koku-pr-check", "BUILD_NUMBER=88888"]
+        for var in os.environ.get("IQE_ENV_VARS", default):
+            result.extend(["--env_var", var])
+
+        return result
+
+    @cached_property
     def iqe_filter_expression(self) -> str:
         if iqe_filter_expression := os.environ.get("IQE_FILTER_EXPRESSION", ""):
             return iqe_filter_expression
@@ -158,12 +168,13 @@ class IQERunner:
             "--env", self.iqe_env,
             "--cji-name", self.component_name,
             *self.selenium_arg,
+            *self.iqe_env_vars,
             "--namespace", self.namespace,
         ]  # fmt: off
         print(ran(["bonfire"] + command), flush=True)
 
         if self.check:
-            return "some-pod"
+            sys.exit()
 
         result = bonfire(*command, _tee=True, _env=self.env, _out=sys.stdout, _err=sys.stderr)
         self.pod = result.rstrip()
