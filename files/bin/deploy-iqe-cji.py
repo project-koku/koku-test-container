@@ -163,7 +163,7 @@ class IQERunner:
         print(ran(["bonfire"] + command), flush=True)
 
         if self.check:
-            return "some-pod"
+            sys.exit()
 
         result = bonfire(*command, _tee=True, _env=self.env, _out=sys.stdout, _err=sys.stderr)
         self.pod = result.rstrip()
