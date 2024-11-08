@@ -66,6 +66,14 @@ class IQERunner:
         self.iqe_requirements_priority = os.environ.get("IQE_REQUIREMENTS_PRIORITY", "")
         self.iqe_test_importance = os.environ.get("IQE_TEST_IMPORTANCE", "")
         self.selenium = os.environ.get("IQE_SELENIUM", "")
+        self.pipeline_run_name = self.get_pipeline_run_name
+
+    @cached_property
+    def get_pipeline_run_name(self) -> str:
+        pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME", "")
+        if pipeline_run_name:
+            return pipeline_run_name.rsplit("-", 1)[0]
+        return "_no_job_name_defined"
 
     @cached_property
     def selenium_arg(self) -> list[str]:
@@ -77,7 +85,8 @@ class IQERunner:
 
     @cached_property
     def iqe_env_vars_arg(self) -> list[str]:
-        default = ["JOB_NAME=koku-pr-check", "BUILD_NUMBER=88888"]
+        job_name = f"JOB_NAME={self.pipeline_run_name}"
+        default = [job_name, "BUILD_NUMBER=88888"]
         return chain.from_iterable(("--env-var", var) for var in default)
 
     @cached_property
