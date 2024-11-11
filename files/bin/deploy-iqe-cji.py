@@ -195,10 +195,10 @@ class IQERunner:
         cji = json.loads(data)
         job_map = cji["status"]["jobMap"]
         if not all(v == "Complete" for v in job_map.values()):
-            print(f"\nSome jobs failed: {job_map}")
+            print(f"\nSome jobs failed: {job_map}", flush=True)
             sys.exit(1)
 
-        print(f"\nAll jobs succeeded: {job_map}")
+        print(f"\nAll jobs succeeded: {job_map}", flush=True)
 
     def run(self) -> None:
         if "ok-to-skip-smokes" in self.pr_labels:
