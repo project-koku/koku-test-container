@@ -135,10 +135,18 @@ def get_pr_labels(
     return labels
 
 
-def log_command(command: t.Sequence[t.Any], no_log_values: t.Sequence[t.Any]) -> None:
+def display(command: str | t.Sequence[t.Any], no_log_values: t.Sequence[t.Any] | None = None) -> None:
+    if isinstance(command, str):
+        quoted = [command]
+    else:
+        quoted = [shlex.quote(str(arg)) for arg in command]
+
+    if no_log_values is None:
+        print(" ".join(quoted), flush=True)
+        return
+
     sanitized = []
     redacted = "*" * 8
-    quoted = [shlex.quote(str(arg)) for arg in command]
     for arg in quoted:
         for value in no_log_values:
             if value in arg:
@@ -215,7 +223,7 @@ def main() -> None:
         print("PR labeled to skip smoke tests")
         return
 
-    log_command(command, no_log_values)
+    display(command, no_log_values)
 
     subprocess.check_call(command, env=os.environ | {"BONFIRE_NS_REQUESTER": requester})
 

@@ -3,7 +3,6 @@
 import argparse
 import json
 import os
-import shlex
 import sys
 import typing as t
 
@@ -12,14 +11,11 @@ from itertools import chain
 
 import sh
 
+from deploy import display
 from deploy import get_pr_labels
 from deploy import get_timeout
 from sh import bonfire
 from sh import oc
-
-
-def ran(command) -> str:
-    return " ".join(shlex.quote(str(arg)) for arg in command)
 
 
 class IQERunner:
@@ -169,7 +165,7 @@ class IQERunner:
             *self.iqe_env_vars_arg,
             "--namespace", self.namespace,
         ]  # fmt: off
-        print(ran(["bonfire"] + command), flush=True)
+        display(["bonfire"] + command)
 
         if self.check:
             sys.exit()
@@ -202,7 +198,7 @@ class IQERunner:
 
     def run(self) -> None:
         if "ok-to-skip-smokes" in self.pr_labels:
-            print("PR labeled to skip smoke tests")
+            display("PR labeled to skip smoke tests")
             return
 
         if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
@@ -213,11 +209,11 @@ class IQERunner:
         try:
             self.follow_logs()
         except sh.TimeoutException:
-            print(f"Test exceeded timeout {self.iqe_cji_timeout}")
+            display(f"Test exceeded timeout {self.iqe_cji_timeout}")
             oc.delete.pod(self.pod, namespace=self.namespace, _ok_code=[0, 1])
         except sh.ErrorReturnCode as exc:
-            print("Test command failed")
-            print(exc)
+            display("Test command failed")
+            display(str(exc))
 
         oc([
             "wait", "--timeout", f"{self.iqe_cji_timeout}s",
