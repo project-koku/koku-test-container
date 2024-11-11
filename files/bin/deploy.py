@@ -121,7 +121,7 @@ def get_pr_labels(
     repo: str = "koku",
 ) -> set[str]:
     if not pr_number:
-        set()
+        return set()
 
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
     try:
