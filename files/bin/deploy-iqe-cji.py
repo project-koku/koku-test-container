@@ -69,7 +69,7 @@ class IQERunner:
 
     @cached_property
     def selenium_arg(self) -> list[str]:
-        return ["--selenium"] if self.selenium else []
+        return ["--selenium"] if self.selenium.lower() == "true" else []
 
     @cached_property
     def env(self) -> dict[str, str]:
