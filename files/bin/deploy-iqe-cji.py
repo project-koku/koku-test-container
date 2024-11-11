@@ -129,7 +129,7 @@ class IQERunner:
             print(f"{exc}. Using default value of 2h")
             timeout = 2 * 60 * 60
 
-        if "full-run-smoke-tests" in self.pr_labels:
+        if any(label in self.pr_labels for label in ("full-run-smoke-tests", "smoke-tests")):
             timeout = 5 * 60 * 60
 
         return int(timeout)

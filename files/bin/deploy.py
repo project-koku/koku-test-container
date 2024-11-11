@@ -168,7 +168,7 @@ def main() -> None:
     no_log_values = []
 
     if "koku" in components:
-        if "smokes-required" in labels and not any(label.endswith("-smoke-tests") for label in labels):
+        if "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
             sys.exit("Missing smoke tests labels.")
 
         # Credentials
