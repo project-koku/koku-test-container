@@ -6,37 +6,16 @@ import os
 import shlex
 import sys
 import typing as t
-import urllib.request
 
 from functools import cached_property
 from itertools import chain
-from urllib.request import HTTPError
 
 import fuzzydate
 import sh
 
+from deploy import get_pr_labels
 from sh import bonfire
 from sh import oc
-
-
-def get_pr_labels(
-    pr_number: str,
-    owner: str = "project-koku",
-    repo: str = "koku",
-) -> set[str]:
-    if not pr_number:
-        set()
-
-    url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
-    try:
-        with urllib.request.urlopen(url) as response:
-            data = json.loads(response.read())
-    except HTTPError as exc:
-        sys.exit(f"Error {exc.code} retrieving {exc.url}.")
-
-    labels = {item["name"] for item in data["labels"]}
-
-    return labels
 
 
 def ran(command) -> str:
