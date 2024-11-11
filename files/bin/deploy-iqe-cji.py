@@ -79,13 +79,15 @@ class IQERunner:
 
     @cached_property
     def build_number(self) -> str:
-        """Get the suffix from the pipeline run name
+        """Get the suffix from the pipeline run name.
+
+        Default to 1 if PIPELINE_RUN_NAME is unset or falsy value.
 
         Example:
             koku-ci-5rxkp --> 5rxkp
         """
 
-        return os.environ.get("PIPELINE_RUN_NAME", "").rsplit("-", 1)[-1]
+        return (os.environ.get("PIPELINE_RUN_NAME") or "1").rsplit("-", 1)[-1]
 
     @cached_property
     def selenium_arg(self) -> list[str]:
