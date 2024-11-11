@@ -85,7 +85,7 @@ class IQERunner:
         if iqe_filter_expression := os.environ.get("IQE_FILTER_EXPRESSION", ""):
             return iqe_filter_expression
 
-        iqe_filter_expression = "test_api"
+        iqe_filter_expression = ""
         if "aws-smoke-tests" in self.pr_labels:
             iqe_filter_expression = "test_api_aws or test_api_ocp_on_aws or test_api_cost_model_aws or test_api_cost_model_ocp_on_aws"
         elif "azure-smoke-tests" in self.pr_labels:
@@ -111,7 +111,7 @@ class IQERunner:
         if iqe_marker_expression := os.environ.get("IQE_MARKER_EXPRESSION", ""):
             return iqe_marker_expression
 
-        iqe_marker_expression = "cost_required"
+        iqe_marker_expression = "cost_smoke"
         if "ocp-smoke-tests" in self.pr_labels:
             iqe_marker_expression = "cost_smoke and not cost_exclude_ocp_smokes"
         elif "hot-fix-smoke-tests" in self.pr_labels:
