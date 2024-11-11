@@ -24,13 +24,14 @@ select = [
     ]
 ignore = [
     # "E501",     # line-too-long
+    "E203",
+    "PERF203",  # try-except-in-loop
     "PLR0913",  # pylint.max-args
     "PLR0914",  # pylint.max-locals
     "PLR0915",  # pylint.max-statements
     "PLR2004",  # pylint.magic-value-comparison
     "PLW1510",  # pylint.subprocess-run-without-check
-    "E203",
-    "PERF203",  # try-except-in-loop
+    "SIM108",   # if-else-block-instead-of-if-exp
     "T201",     # print
     ]
 
