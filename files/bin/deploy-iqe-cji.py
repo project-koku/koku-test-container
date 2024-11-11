@@ -75,7 +75,7 @@ class IQERunner:
             koku-ci-5rxkp --> koku-ci
         """
 
-        return os.environ.get("PIPELINE_RUN_NAME", "").rsplit("-", 1)[0]
+        return (os.environ.get("PIPELINE_RUN_NAME") or "").rsplit("-", 1)[0]
 
     @cached_property
     def build_number(self) -> str:
