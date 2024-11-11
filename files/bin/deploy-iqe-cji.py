@@ -10,10 +10,10 @@ import typing as t
 from functools import cached_property
 from itertools import chain
 
-import fuzzydate
 import sh
 
 from deploy import get_pr_labels
+from deploy import get_timeout
 from sh import bonfire
 from sh import oc
 
@@ -133,16 +133,7 @@ class IQERunner:
 
     @cached_property
     def iqe_cji_timeout(self) -> int:
-        try:
-            timeout = fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "2h"))
-        except (TypeError, ValueError) as exc:
-            print(f"{exc}. Using default value of 2h")
-            timeout = 2 * 60 * 60
-
-        if "full-run-smoke-tests" in self.pr_labels:
-            timeout = 5 * 60 * 60
-
-        return int(timeout)
+        return get_timeout("IQE_CJI_TIMEOUT", self.pr_labels)
 
     @cached_property
     def pr_labels(self) -> set[str]:

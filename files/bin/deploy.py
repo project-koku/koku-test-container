@@ -102,12 +102,15 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def get_deploy_timeout(labels: set[str]) -> int:
+def get_timeout(env_var: str, labels: set[str] | None = None) -> int:
     try:
-        timeout = fuzzydate.to_seconds(os.environ.get("DEPLOY_TIMEOUT", "30min"))
+        timeout = fuzzydate.to_seconds(os.environ.get(env_var, "2h"))
     except (TypeError, ValueError) as exc:
-        print(f"{exc}. Using default value of 30min")
-        timeout = 30 * 60
+        print(f"{exc}. Using default value of 2h")
+        timeout = 2 * 60 * 60
+
+    if labels and "full-run-smoke-tests" in labels:
+        timeout = 5 * 60 * 60
 
     return int(timeout)
 
@@ -160,7 +163,7 @@ def main() -> None:
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
     deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
-    deploy_timeout = get_deploy_timeout(labels)
+    deploy_timeout = get_timeout("DEPLOY_TIMEOUT", labels)
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
