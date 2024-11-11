@@ -96,7 +96,7 @@ class IQERunner:
         return os.environ | {"BONFIRE_NS_REQUESTER": self.requester}
 
     @cached_property
-    def iqe_env_vars_arg(self) -> list[str]:
+    def iqe_env_vars_arg(self) -> t.Iterable[str]:
         job_name = f"JOB_NAME={self.pipeline_run_name}"
         build_number = f"BUILD_NUMBER={self.build_number}"
         env_var_params = [job_name, build_number]
