@@ -66,14 +66,17 @@ class IQERunner:
         self.iqe_requirements_priority = os.environ.get("IQE_REQUIREMENTS_PRIORITY", "")
         self.iqe_test_importance = os.environ.get("IQE_TEST_IMPORTANCE", "")
         self.selenium = os.environ.get("IQE_SELENIUM", "")
-        self.pipeline_run_name = self.get_pipeline_run_name
 
     @cached_property
-    def get_pipeline_run_name(self) -> str:
-        pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME", "")
-        if pipeline_run_name:
-            return pipeline_run_name.rsplit("-", 1)[0]
-        return "_no_job_name_defined"
+    def pipeline_run_name(self) -> str:
+        """Trim the random suffix from the pipeline run name
+
+        Example:
+            koku-ci-5rxkp --> koku-ci
+
+        """
+
+        return os.environ.get("PIPELINE_RUN_NAME", "").rsplit("-", 1)[0]
 
     @cached_property
     def selenium_arg(self) -> list[str]:
