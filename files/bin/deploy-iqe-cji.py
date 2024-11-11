@@ -69,14 +69,23 @@ class IQERunner:
 
     @cached_property
     def pipeline_run_name(self) -> str:
-        """Trim the random suffix from the pipeline run name
+        """Get the pipeline name from the pipeline run name
 
         Example:
             koku-ci-5rxkp --> koku-ci
-
         """
 
         return os.environ.get("PIPELINE_RUN_NAME", "").rsplit("-", 1)[0]
+
+    @cached_property
+    def build_number(self) -> str:
+        """Get the suffix from the pipeline run name
+
+        Example:
+            koku-ci-5rxkp --> 5rxkp
+        """
+
+        return os.environ.get("PIPELINE_RUN_NAME", "").rsplit("-", 1)[-1]
 
     @cached_property
     def selenium_arg(self) -> list[str]:
@@ -89,8 +98,9 @@ class IQERunner:
     @cached_property
     def iqe_env_vars_arg(self) -> list[str]:
         job_name = f"JOB_NAME={self.pipeline_run_name}"
-        default = [job_name, "BUILD_NUMBER=88888"]
-        return chain.from_iterable(("--env-var", var) for var in default)
+        build_number = f"BUILD_NUMBER={self.build_number}"
+        env_var_params = [job_name, build_number]
+        return chain.from_iterable(("--env-var", var) for var in env_var_params)
 
     @cached_property
     def iqe_filter_expression(self) -> str:
