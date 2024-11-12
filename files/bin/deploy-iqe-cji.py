@@ -79,15 +79,22 @@ class IQERunner:
 
     @cached_property
     def build_number(self) -> str:
-        """Get the suffix from the pipeline run name.
+        """Use the first five digits of CHECK_RUN_ID.
 
-        Default to 1 if PIPELINE_RUN_NAME is unset or falsy value.
+        Default to 1 if CHECK_RUN_ID is unset or falsy value.
 
         Example:
-            koku-ci-5rxkp --> 5rxkp
+            31510716818 --> 31510
         """
 
-        return (os.environ.get("PIPELINE_RUN_NAME") or "1").rsplit("-", 1)[-1]
+        check_run_id = os.environ.get("CHECK_RUN_ID") or "1"
+        try:
+            build_number = check_run_id[:5]
+        except TypeError:
+            print("There was a probelem with {check_run_id=}. Using default value of 1.", flush=True)
+            build_number = "1"
+
+        return build_number
 
     @cached_property
     def selenium_arg(self) -> list[str]:
