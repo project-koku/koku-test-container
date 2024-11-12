@@ -3,44 +3,19 @@
 import argparse
 import json
 import os
-import shlex
 import sys
 import typing as t
-import urllib.request
 
 from functools import cached_property
 from itertools import chain
-from urllib.request import HTTPError
 
-import fuzzydate
 import sh
 
+from deploy import display
+from deploy import get_pr_labels
+from deploy import get_timeout
 from sh import bonfire
 from sh import oc
-
-
-def get_pr_labels(
-    pr_number: str,
-    owner: str = "project-koku",
-    repo: str = "koku",
-) -> set[str]:
-    if not pr_number:
-        set()
-
-    url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
-    try:
-        with urllib.request.urlopen(url) as response:
-            data = json.loads(response.read())
-    except HTTPError as exc:
-        sys.exit(f"Error {exc.code} retrieving {exc.url}.")
-
-    labels = {item["name"] for item in data["labels"]}
-
-    return labels
-
-
-def ran(command) -> str:
-    return " ".join(shlex.quote(str(arg)) for arg in command)
 
 
 class IQERunner:
@@ -91,7 +66,7 @@ class IQERunner:
         try:
             build_number = check_run_id[:5]
         except TypeError:
-            print("There was a probelem with {check_run_id=}. Using default value of 1.", flush=True)
+            display("There was a probelem with {check_run_id=}. Using default value of 1.")
             build_number = "1"
 
         return build_number
@@ -154,16 +129,7 @@ class IQERunner:
 
     @cached_property
     def iqe_cji_timeout(self) -> int:
-        try:
-            timeout = fuzzydate.to_seconds(os.environ.get("IQE_CJI_TIMEOUT", "2h"))
-        except (TypeError, ValueError) as exc:
-            print(f"{exc}. Using default value of 2h")
-            timeout = 2 * 60 * 60
-
-        if "full-run-smoke-tests" in self.pr_labels:
-            timeout = 5 * 60 * 60
-
-        return int(timeout)
+        return get_timeout("IQE_CJI_TIMEOUT", self.pr_labels)
 
     @cached_property
     def pr_labels(self) -> set[str]:
@@ -199,7 +165,7 @@ class IQERunner:
             *self.iqe_env_vars_arg,
             "--namespace", self.namespace,
         ]  # fmt: off
-        print(ran(["bonfire"] + command), flush=True)
+        display(["bonfire"] + command)
 
         if self.check:
             sys.exit()
@@ -225,14 +191,14 @@ class IQERunner:
         cji = json.loads(data)
         job_map = cji["status"]["jobMap"]
         if not all(v == "Complete" for v in job_map.values()):
-            print(f"\nSome jobs failed: {job_map}")
+            print(f"\nSome jobs failed: {job_map}", flush=True)
             sys.exit(1)
 
-        print(f"\nAll jobs succeeded: {job_map}")
+        print(f"\nAll jobs succeeded: {job_map}", flush=True)
 
     def run(self) -> None:
         if "ok-to-skip-smokes" in self.pr_labels:
-            print("PR labeled to skip smoke tests")
+            display("PR labeled to skip smoke tests")
             return
 
         if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
@@ -243,11 +209,11 @@ class IQERunner:
         try:
             self.follow_logs()
         except sh.TimeoutException:
-            print(f"Test exceeded timeout {self.iqe_cji_timeout}")
+            display(f"Test exceeded timeout {self.iqe_cji_timeout}")
             oc.delete.pod(self.pod, namespace=self.namespace, _ok_code=[0, 1])
         except sh.ErrorReturnCode as exc:
-            print("Test command failed")
-            print(exc)
+            display("Test command failed")
+            display(str(exc))
 
         oc([
             "wait", "--timeout", f"{self.iqe_cji_timeout}s",

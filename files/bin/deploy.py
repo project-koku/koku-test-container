@@ -102,12 +102,15 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def get_deploy_timeout(labels: set[str]) -> int:
+def get_timeout(env_var: str, labels: set[str] | None = None) -> int:
     try:
-        timeout = fuzzydate.to_seconds(os.environ.get("DEPLOY_TIMEOUT", "30min"))
+        timeout = fuzzydate.to_seconds(os.environ.get(env_var, "2h"))
     except (TypeError, ValueError) as exc:
-        print(f"{exc}. Using default value of 30min")
-        timeout = 30 * 60
+        print(f"{exc}. Using default value of 2h")
+        timeout = 2 * 60 * 60
+
+    if labels and "full-run-smoke-tests" in labels:
+        timeout = 5 * 60 * 60
 
     return int(timeout)
 
@@ -118,7 +121,7 @@ def get_pr_labels(
     repo: str = "koku",
 ) -> set[str]:
     if not pr_number:
-        set()
+        return set()
 
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
     try:
@@ -132,10 +135,18 @@ def get_pr_labels(
     return labels
 
 
-def log_command(command: t.Sequence[t.Any], no_log_values: t.Sequence[t.Any]) -> None:
+def display(command: str | t.Sequence[t.Any], no_log_values: t.Sequence[t.Any] | None = None) -> None:
+    if isinstance(command, str):
+        quoted = [command]
+    else:
+        quoted = [shlex.quote(str(arg)) for arg in command]
+
+    if no_log_values is None:
+        print(" ".join(quoted), flush=True)
+        return
+
     sanitized = []
     redacted = "*" * 8
-    quoted = [shlex.quote(str(arg)) for arg in command]
     for arg in quoted:
         for value in no_log_values:
             if value in arg:
@@ -160,7 +171,7 @@ def main() -> None:
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
     deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
-    deploy_timeout = get_deploy_timeout(labels)
+    deploy_timeout = get_timeout("DEPLOY_TIMEOUT", labels)
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
@@ -212,7 +223,7 @@ def main() -> None:
         print("PR labeled to skip smoke tests")
         return
 
-    log_command(command, no_log_values)
+    display(command, no_log_values)
 
     subprocess.check_call(command, env=os.environ | {"BONFIRE_NS_REQUESTER": requester})
 
