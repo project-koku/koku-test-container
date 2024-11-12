@@ -68,6 +68,35 @@ class IQERunner:
         self.selenium = os.environ.get("IQE_SELENIUM", "")
 
     @cached_property
+    def pipeline_run_name(self) -> str:
+        """Get the pipeline name from the pipeline run name
+
+        Example:
+            koku-ci-5rxkp --> koku-ci
+        """
+
+        return (os.environ.get("PIPELINE_RUN_NAME") or "").rsplit("-", 1)[0]
+
+    @cached_property
+    def build_number(self) -> str:
+        """Use the first five digits of CHECK_RUN_ID.
+
+        Default to 1 if CHECK_RUN_ID is unset or falsy value.
+
+        Example:
+            31510716818 --> 31510
+        """
+
+        check_run_id = os.environ.get("CHECK_RUN_ID") or "1"
+        try:
+            build_number = check_run_id[:5]
+        except TypeError:
+            print("There was a probelem with {check_run_id=}. Using default value of 1.", flush=True)
+            build_number = "1"
+
+        return build_number
+
+    @cached_property
     def selenium_arg(self) -> list[str]:
         return ["--selenium"] if self.selenium.lower() == "true" else []
 
@@ -76,9 +105,11 @@ class IQERunner:
         return os.environ | {"BONFIRE_NS_REQUESTER": self.requester}
 
     @cached_property
-    def iqe_env_vars_arg(self) -> list[str]:
-        default = ["JOB_NAME=koku-pr-check", "BUILD_NUMBER=88888"]
-        return chain.from_iterable(("--env-var", var) for var in default)
+    def iqe_env_vars_arg(self) -> t.Iterable[str]:
+        job_name = f"JOB_NAME={self.pipeline_run_name}"
+        build_number = f"BUILD_NUMBER={self.build_number}"
+        env_var_params = [job_name, build_number]
+        return chain.from_iterable(("--env-var", var) for var in env_var_params)
 
     @cached_property
     def iqe_filter_expression(self) -> str:
