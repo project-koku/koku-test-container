@@ -66,7 +66,7 @@ class IQERunner:
         try:
             build_number = check_run_id[:5]
         except TypeError:
-            print("There was a probelem with {check_run_id=}. Using default value of 1.", flush=True)
+            display("There was a probelem with {check_run_id=}. Using default value of 1.")
             build_number = "1"
 
         return build_number
