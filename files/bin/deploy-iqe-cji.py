@@ -66,12 +66,24 @@ class IQERunner:
         try:
             build_number = check_run_id[:5]
         except TypeError:
-            display("There was a probelem with {check_run_id=}. Using default value of 1.")
+            display("There was a problem with {check_run_id=}. Using default value of 1.")
             build_number = "1"
 
         return build_number
 
     @cached_property
+    def build_url(self) -> str:
+        """Create a build URL for the pipeline run"""
+
+        root_url = "https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/"
+        params_url = "{component_name}/pipelineruns/{pipeline_run_name}"
+
+        if self.component_name and self.pipeline_run_name:
+            return f"{root_url}{params_url}".format(component_name=self.component_name, pipeline_run_name=self.pipeline_run_name)
+
+        print("Unable to create build URL. Missing component_name or pipeline_run_name. Returning root URL.")
+        return root_url
+
     def selenium_arg(self) -> list[str]:
         return ["--selenium"] if self.selenium.lower() == "true" else []
 
@@ -83,7 +95,8 @@ class IQERunner:
     def iqe_env_vars_arg(self) -> t.Iterable[str]:
         job_name = f"JOB_NAME={self.pipeline_run_name}"
         build_number = f"BUILD_NUMBER={self.build_number}"
-        env_var_params = [job_name, build_number]
+        build_url = f"BUILD_URL={self.build_url}"
+        env_var_params = [job_name, build_number, build_url]
         return chain.from_iterable(("--env-var", var) for var in env_var_params)
 
     @cached_property
