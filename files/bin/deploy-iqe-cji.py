@@ -84,6 +84,7 @@ class IQERunner:
         print("Unable to create build URL. Missing component_name or pipeline_run_name. Returning root URL.")
         return root_url
 
+    @cached_property
     def selenium_arg(self) -> list[str]:
         return ["--selenium"] if self.selenium.lower() == "true" else []
 
