@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import model_validator
+from pydantic import ValidationError
 
 
 class Git(BaseModel):
@@ -67,20 +68,13 @@ class Snapshot(BaseModel):
     components: list[Component]
 
 
-def get_component_options(pr_number: str) -> list[str]:
-    snapshot_str = os.environ.get("SNAPSHOT")
-
-    if snapshot_str is None:
-        sys.exit("Missing SNAPSHOT")
-
-    snapshot = Snapshot.model_validate_json(snapshot_str)
-
+def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
     prefix = ""
     if pr_number:
         prefix = f"pr-{pr_number}-"
 
     result = []
-    for component in snapshot.components:
+    for component in components:
         component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or component.name
         result.extend((
             "--set-template-ref", f"{component_name}={component.source.git.revision}",
@@ -164,8 +158,14 @@ def main() -> None:
     namespace = args.namespace
     requester = args.requester
 
+    snapshot_str = os.environ.get("SNAPSHOT", "")
+    try:
+        snapshot = Snapshot.model_validate_json(snapshot_str)
+    except ValidationError:
+        sys.exit(f"Missing or invalid SNAPSHOT: {snapshot_str}")
+
     pr_number = os.environ.get("PR_NUMBER", "")
-    labels = get_pr_labels(pr_number)
+    labels = get_pr_labels(pr_number, repo=snapshot.application)
     app_name = os.environ.get("APP_NAME")
     components = os.environ.get("COMPONENTS", "").split()
     components_arg = chain.from_iterable(("--component", component) for component in components)
@@ -179,7 +179,7 @@ def main() -> None:
     cred_params = []
     no_log_values = []
 
-    if "koku" in components:
+    if "koku" in set(component.name for component in snapshot.components):
         if "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
             sys.exit("Missing smoke tests labels.")
 
@@ -216,7 +216,7 @@ def main() -> None:
         *components_arg,
         *components_with_resources_arg,
         *extra_deploy_args.split(),
-        *get_component_options(pr_number),
+        *get_component_options(snapshot.components, pr_number),
         app_name,
     ]  # fmt: off
 
