@@ -220,7 +220,12 @@ def main() -> None:
     ]  # fmt: off
 
     if "ok-to-skip-smokes" in labels:
-        print("PR labeled to skip smoke tests")
+        display("PR labeled to skip smoke tests")
+        return
+
+    # This allows Konflux tests to run but will skip tests in Jenkins
+    if "run-konflux-tests" not in labels:
+        display("PR is not labeled to run tests in Konflux")
         return
 
     display(command, no_log_values)
