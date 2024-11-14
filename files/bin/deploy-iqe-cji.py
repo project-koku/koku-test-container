@@ -209,6 +209,11 @@ class IQERunner:
             display("PR labeled to skip smoke tests")
             return
 
+        # This allows Konflux tests to run but will skip tests in Jenkins
+        if "run-konflux-tests" not in self.pr_labels:
+            display("PR is not labeled to run tests in Konflux")
+            return
+
         if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
             sys.exit("Missing smoke tests labels.")
 
