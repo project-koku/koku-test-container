@@ -75,14 +75,9 @@ class IQERunner:
     def build_url(self) -> str:
         """Create a build URL for the pipeline run"""
 
-        root_url = "https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/"
-        params_url = "{component_name}/pipelineruns/{pipeline_run_name}"
+        application = os.environ.get("APPLICATION")
+        return "https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/{application}/{self.pipeline_run_name}"
 
-        if self.component_name and self.pipeline_run_name:
-            return f"{root_url}{params_url}".format(component_name=self.component_name, pipeline_run_name=self.pipeline_run_name)
-
-        print("Unable to create build URL. Missing component_name or pipeline_run_name. Returning root URL.")
-        return root_url
 
     @cached_property
     def selenium_arg(self) -> list[str]:
