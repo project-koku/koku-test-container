@@ -98,6 +98,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("namespace", help="Reserved namespace used for deployment")
     parser.add_argument("requester", help="Pipeline run name")
+    parser.add_argument("--check", "-c", action="store_true", help="Output command, do not run")
 
     return parser.parse_args()
 
@@ -224,6 +225,9 @@ def main() -> None:
         return
 
     display(command, no_log_values)
+
+    if args.check:
+        sys.exit()
 
     subprocess.check_call(command, env=os.environ | {"BONFIRE_NS_REQUESTER": requester})
 
