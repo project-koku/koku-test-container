@@ -44,13 +44,16 @@ class IQERunner:
 
     @cached_property
     def pipeline_run_name(self) -> str:
-        """Get the pipeline name from the pipeline run name
+        return os.environ.get("PIPELINE_RUN_NAME") or ""
+
+    @property
+    def job_name(self) -> str:
+        """Get the job name from the pipeline run name
 
         Example:
             koku-ci-5rxkp --> koku-ci
         """
-
-        return (os.environ.get("PIPELINE_RUN_NAME") or "").rsplit("-", 1)[0]
+        return self.pipeline_run_name.rsplit("-", 1)[0]
 
     @cached_property
     def build_number(self) -> str:
@@ -76,8 +79,7 @@ class IQERunner:
         """Create a build URL for the pipeline run"""
 
         application = os.environ.get("APPLICATION")
-        pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME")
-        return f"https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/{application}/pipelineruns/{pipeline_run_name}"
+        return f"https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/{application}/pipelineruns/{self.pipeline_run_name}"
 
     @cached_property
     def selenium_arg(self) -> list[str]:
@@ -89,7 +91,7 @@ class IQERunner:
 
     @cached_property
     def iqe_env_vars_arg(self) -> t.Iterable[str]:
-        job_name = f"JOB_NAME={self.pipeline_run_name}"
+        job_name = f"JOB_NAME={self.job_name}"
         build_number = f"BUILD_NUMBER={self.build_number}"
         build_url = f"BUILD_URL={self.build_url}"
         env_var_params = [job_name, build_number, build_url]
