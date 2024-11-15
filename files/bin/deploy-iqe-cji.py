@@ -186,7 +186,7 @@ class IQERunner:
 
         return self.pod
 
-    def follow_logs(self):
+    def follow_logs(self) -> None:
         oc.logs(self.pod, namespace=self.namespace, container=self.container, follow=True,
             _out=sys.stdout,
             _err=sys.stderr,
