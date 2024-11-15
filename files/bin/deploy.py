@@ -188,16 +188,6 @@ def main() -> None:
         if "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
             sys.exit("Missing smoke tests labels.")
 
-        # Skip Konflux tests unless explicitly labeled.
-        # This prevents tests from running in both Jenkins and Konflux and can be
-        # removed when Konflux increases the integration test timeout and
-        # Jenkins tests are disabled.
-        #
-        # https://issues.redhat.com/browse/KONFLUX-5449
-        if "run-konflux-tests" not in labels:
-            display("PR is not labeled to run tests in Konflux")
-            return
-
         # Credentials
         aws_credentials_eph = os.environ.get("AWS_CREDENTIALS_EPH")
         gcp_credentials_eph = os.environ.get("GCP_CREDENTIALS_EPH")
