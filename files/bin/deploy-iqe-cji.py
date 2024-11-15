@@ -40,17 +40,17 @@ class IQERunner:
         self.iqe_requirements = os.environ.get("IQE_REQUIREMENTS", "")
         self.iqe_requirements_priority = os.environ.get("IQE_REQUIREMENTS_PRIORITY", "")
         self.iqe_test_importance = os.environ.get("IQE_TEST_IMPORTANCE", "")
+        self.pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME") or ""
         self.selenium = os.environ.get("IQE_SELENIUM", "")
 
-    @cached_property
-    def pipeline_run_name(self) -> str:
-        """Get the pipeline name from the pipeline run name
+    @property
+    def job_name(self) -> str:
+        """Get the job name from the pipeline run name
 
         Example:
             koku-ci-5rxkp --> koku-ci
         """
-
-        return (os.environ.get("PIPELINE_RUN_NAME") or "").rsplit("-", 1)[0]
+        return self.pipeline_run_name.rsplit("-", 1)[0]
 
     @cached_property
     def build_number(self) -> str:
@@ -76,8 +76,7 @@ class IQERunner:
         """Create a build URL for the pipeline run"""
 
         application = os.environ.get("APPLICATION")
-        pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME")
-        return f"https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/{application}/pipelineruns/{pipeline_run_name}"
+        return f"https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/{application}/pipelineruns/{self.pipeline_run_name}"
 
     @cached_property
     def selenium_arg(self) -> list[str]:
@@ -89,7 +88,7 @@ class IQERunner:
 
     @cached_property
     def iqe_env_vars_arg(self) -> t.Iterable[str]:
-        job_name = f"JOB_NAME={self.pipeline_run_name}"
+        job_name = f"JOB_NAME={self.job_name}"
         build_number = f"BUILD_NUMBER={self.build_number}"
         build_url = f"BUILD_URL={self.build_url}"
         env_var_params = [job_name, build_number, build_url]
@@ -143,7 +142,7 @@ class IQERunner:
     @cached_property
     def pr_labels(self) -> set[str]:
         if self.check:
-            return set(os.environ.get("PR_LABELS", "").split()) or {"hot-fix-smoke-tests", "bug"}
+            return set(os.environ.get("PR_LABELS", "").split()) or {"run-konflux-tests", "hot-fix-smoke-tests", "bug"}
 
         return get_pr_labels(self.pr_number)
 
@@ -184,7 +183,7 @@ class IQERunner:
 
         return self.pod
 
-    def follow_logs(self):
+    def follow_logs(self) -> None:
         oc.logs(self.pod, namespace=self.namespace, container=self.container, follow=True,
             _out=sys.stdout,
             _err=sys.stderr,
