@@ -210,7 +210,12 @@ class IQERunner:
             display("PR labeled to skip smoke tests")
             return
 
-        # This allows Konflux tests to run but will skip tests in Jenkins
+        # Skip Konflux tests unless explicitly labeled.
+        # This prevents tests from running in both Jenkins and Konflux and can be
+        # removed when Konflux increases the integration test timeout and
+        # Jenkins tests are disabled.
+        #
+        # https://issues.redhat.com/browse/KONFLUX-5449
         if "run-konflux-tests" not in self.pr_labels:
             display("PR is not labeled to run tests in Konflux")
             return
