@@ -171,6 +171,7 @@ def main() -> None:
     components_arg = chain.from_iterable(("--component", component) for component in components)
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
+    snapshot_components = set(component.name for component in snapshot.components)
     deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
     deploy_timeout = get_timeout("DEPLOY_TIMEOUT", labels)
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
@@ -179,9 +180,23 @@ def main() -> None:
     cred_params = []
     no_log_values = []
 
-    if "koku" in set(component.name for component in snapshot.components):
+    if "ok-to-skip-smokes" in labels:
+        display("PR labeled to skip smoke tests")
+        return
+
+    if "koku" in snapshot_components:
         if "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
             sys.exit("Missing smoke tests labels.")
+
+        # Skip Konflux tests unless explicitly labeled.
+        # This prevents tests from running in both Jenkins and Konflux and can be
+        # removed when Konflux increases the integration test timeout and
+        # Jenkins tests are disabled.
+        #
+        # https://issues.redhat.com/browse/KONFLUX-5449
+        if "run-konflux-tests" not in labels:
+            display("PR is not labeled to run tests in Konflux")
+            return
 
         # Credentials
         aws_credentials_eph = os.environ.get("AWS_CREDENTIALS_EPH")
@@ -219,15 +234,6 @@ def main() -> None:
         *get_component_options(snapshot.components, pr_number),
         app_name,
     ]  # fmt: off
-
-    if "ok-to-skip-smokes" in labels:
-        display("PR labeled to skip smoke tests")
-        return
-
-    # This allows Konflux tests to run but will skip tests in Jenkins
-    if "run-konflux-tests" not in labels:
-        display("PR is not labeled to run tests in Konflux")
-        return
 
     display(command, no_log_values)
 
