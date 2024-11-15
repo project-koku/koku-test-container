@@ -76,7 +76,8 @@ class IQERunner:
         """Create a build URL for the pipeline run"""
 
         application = os.environ.get("APPLICATION")
-        return f"https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/{application}/{self.pipeline_run_name}"
+        pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME")
+        return f"https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/{application}/pipelineruns/{pipeline_run_name}"
 
     @cached_property
     def selenium_arg(self) -> list[str]:
