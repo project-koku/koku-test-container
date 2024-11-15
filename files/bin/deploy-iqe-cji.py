@@ -40,11 +40,8 @@ class IQERunner:
         self.iqe_requirements = os.environ.get("IQE_REQUIREMENTS", "")
         self.iqe_requirements_priority = os.environ.get("IQE_REQUIREMENTS_PRIORITY", "")
         self.iqe_test_importance = os.environ.get("IQE_TEST_IMPORTANCE", "")
+        self.pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME") or ""
         self.selenium = os.environ.get("IQE_SELENIUM", "")
-
-    @cached_property
-    def pipeline_run_name(self) -> str:
-        return os.environ.get("PIPELINE_RUN_NAME") or ""
 
     @property
     def job_name(self) -> str:
