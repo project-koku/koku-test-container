@@ -145,7 +145,7 @@ class IQERunner:
     @cached_property
     def pr_labels(self) -> set[str]:
         if self.check:
-            return set(os.environ.get("PR_LABELS", "").split()) or {"hot-fix-smoke-tests", "bug"}
+            return set(os.environ.get("PR_LABELS", "").split()) or {"run-konflux-tests", "hot-fix-smoke-tests", "bug"}
 
         return get_pr_labels(self.pr_number)
 
