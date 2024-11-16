@@ -164,8 +164,9 @@ def main() -> None:
     except ValidationError:
         sys.exit(f"Missing or invalid SNAPSHOT: {snapshot_str}")
 
+    owner, repo = snapshot.components[0].source.git.url.path.split("/")[1:]
     pr_number = os.environ.get("PR_NUMBER", "")
-    labels = get_pr_labels(pr_number, repo=snapshot.application)
+    labels = get_pr_labels(pr_number, owner=owner, repo=repo)
     app_name = os.environ.get("APP_NAME")
     components = os.environ.get("COMPONENTS", "").split()
     components_arg = chain.from_iterable(("--component", component) for component in components)
