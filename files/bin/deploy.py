@@ -69,10 +69,7 @@ class Snapshot(BaseModel):
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
-    prefix = ""
-    if pr_number:
-        prefix = f"pr-{pr_number}-"
-
+    prefix = f"pr-{pr_number}-" if pr_number else ""
     result = []
     for component in components:
         component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or component.name
@@ -125,9 +122,7 @@ def get_pr_labels(
     except HTTPError as exc:
         sys.exit(f"Error {exc.code} retrieving {exc.url}.")
 
-    labels = {item["name"] for item in data["labels"]}
-
-    return labels
+    return {item["name"] for item in data["labels"]}
 
 
 def display(command: str | t.Sequence[t.Any], no_log_values: t.Sequence[t.Any] | None = None) -> None:
@@ -172,7 +167,7 @@ def main() -> None:
     components_arg = chain.from_iterable(("--component", component) for component in components)
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
-    snapshot_components = set(component.name for component in snapshot.components)
+    snapshot_components = {component.name for component in snapshot.components}
     deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
     deploy_timeout = get_timeout("DEPLOY_TIMEOUT", labels)
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
@@ -218,6 +213,11 @@ def main() -> None:
             oci_credentials_eph,
             oci_config_eph,
         ]
+
+    for secret in ["koku-aws", "koku-gcp", "koku-oci"]:
+        cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace=${namespace} -f -"
+        display(cmd)
+        subprocess.run(cmd, shell=True)
 
     command = [
         "bonfire", "deploy",
