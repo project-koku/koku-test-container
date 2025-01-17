@@ -215,7 +215,7 @@ def main() -> None:
         ]
 
     for secret in ["koku-aws", "koku-gcp", "koku-oci"]:
-        cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace=${namespace} -f -"
+        cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"
         display(cmd)
         subprocess.run(cmd, shell=True)
 
