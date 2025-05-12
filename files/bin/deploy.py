@@ -173,7 +173,6 @@ def main() -> None:
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
-    cred_params = []
     no_log_values = []
 
     if "ok-to-skip-smokes" in labels:
@@ -200,13 +199,6 @@ def main() -> None:
         oci_credentials_eph = os.environ.get("OCI_CREDENTIALS_EPH")
         oci_config_eph = os.environ.get("OCI_CONFIG_EPH")
 
-        cred_params = [
-            "--set-parameter", f"koku/AWS_CREDENTIALS_EPH={aws_credentials_eph}",
-            "--set-parameter", f"koku/GCP_CREDENTIALS_EPH={gcp_credentials_eph}",
-            "--set-parameter", f"koku/OCI_CREDENTIALS_EPH={oci_credentials_eph}",
-            "--set-parameter", f"koku/OCI_CONFIG_EPH={oci_config_eph}",
-        ]  # fmt: off
-
         no_log_values = [
             aws_credentials_eph,
             gcp_credentials_eph,
@@ -221,19 +213,27 @@ def main() -> None:
 
     command = [
         "bonfire", "deploy",
+        app_name,
         "--source", "appsre",
         "--ref-env", ref_env,
         "--namespace", namespace,
         "--timeout", str(deploy_timeout),
         "--optional-deps-method", optional_deps_method,
         "--frontends", deploy_frontends,
+        "--no-single-replicas",
         "--set-parameter", "rbac/MIN_REPLICAS=1",
-        *cred_params,
+        "--set-parameter",
+        f"koku/SCHEMA_SUFFIX=_{os.environ.get('IMAGE_TAG', 'latest')}_{os.environ.get('BUILD_NUMBER', '0000')}",
+        "--set-parameter", f"koku/DBM_IMAGE={os.environ.get('IMAGE', '')}",
+        "--set-parameter", f"koku/DBM_IMAGE_TAG={os.environ.get('IMAGE_TAG', '')}",
+        "--set-parameter", f"koku/DBM_INVOCATION={secrets.randbelow(100)}",
+        "--set-parameter", f"koku/IMAGE={os.environ.get('IMAGE', '')}",
+        "--set-parameter", "trino/HIVE_PROPERTIES_FILE=glue.properties",
+        "--set-parameter", "trino/GLUE_PROPERTIES_FILE=hive.properties",
         *components_arg,
         *components_with_resources_arg,
         *extra_deploy_args.split(),
-        *get_component_options(snapshot.components, pr_number),
-        app_name,
+        *get_component_options(pr_number),
     ]  # fmt: off
 
     display(command, no_log_values)
