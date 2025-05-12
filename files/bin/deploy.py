@@ -68,19 +68,49 @@ class Snapshot(BaseModel):
     components: list[Component]
 
 
+def get_build_number() -> str:
+    """Use the first five digits of CHECK_RUN_ID.
+
+    Default to 1 if CHECK_RUN_ID is unset or falsy value.
+
+    Example:
+        31510716818 --> 31510
+    """
+
+    check_run_id = os.environ.get("CHECK_RUN_ID") or "1"
+    try:
+        build_number = check_run_id[:5]
+    except TypeError:
+        display("There was a problem with {check_run_id=}. Using default value of 1.")
+        build_number = "1"
+
+    return build_number
+
+
 def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
     prefix = f"pr-{pr_number}-" if pr_number else ""
+    build_number = get_build_number()
+
     result = []
+
     for component in components:
         component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or component.name
+        revision = component.source.git.revision[:7]
+        image = component.container_image.image
+
         result.extend((
             "--set-template-ref", f"{component_name}={component.source.git.revision}",
-            "--set-parameter", f"{component_name}/IMAGE={component.container_image.image}",
-            "--set-parameter", f"{component_name}/IMAGE_TAG={prefix}{component.source.git.revision[:7]}",
-            "--set-parameter", f"{component_name}/DBM_IMAGE={component.container_image.image}",
-            "--set-parameter", f"{component_name}/DBM_IMAGE_TAG={prefix}{component.source.git.revision[:7]}",
+            "--set-parameter", f"{component_name}/IMAGE={image}",
+            "--set-parameter", f"{component_name}/IMAGE_TAG={prefix}{revision}",
+            "--set-parameter", f"{component_name}/DBM_IMAGE={image}",
+            "--set-parameter", f"{component_name}/DBM_IMAGE_TAG={prefix}{revision}",
             "--set-parameter", f"{component_name}/DBM_INVOCATION={secrets.randbelow(100)}",
-        ))  # fmt: off
+        ))
+
+        if component_name == "koku":
+            image_tag = os.environ.get("IMAGE_TAG", f"{prefix}{revision}")
+            result.append("--set-parameter")
+            result.append(f"{component_name}/SCHEMA_SUFFIX=_{image_tag}_{build_number}")
 
     return result
 
@@ -223,11 +253,6 @@ def main() -> None:
         "--no-single-replicas",
         "--set-parameter", "rbac/MIN_REPLICAS=1",
         "--set-parameter",
-        f"koku/SCHEMA_SUFFIX=_{os.environ.get('IMAGE_TAG', 'latest')}_{os.environ.get('BUILD_NUMBER', '0000')}",
-        "--set-parameter", f"koku/DBM_IMAGE={os.environ.get('IMAGE', '')}",
-        "--set-parameter", f"koku/DBM_IMAGE_TAG={os.environ.get('IMAGE_TAG', '')}",
-        "--set-parameter", f"koku/DBM_INVOCATION={secrets.randbelow(100)}",
-        "--set-parameter", f"koku/IMAGE={os.environ.get('IMAGE', '')}",
         "--set-parameter", "trino/HIVE_PROPERTIES_FILE=glue.properties",
         "--set-parameter", "trino/GLUE_PROPERTIES_FILE=hive.properties",
         *components_arg,
