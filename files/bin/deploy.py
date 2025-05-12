@@ -99,12 +99,18 @@ def get_component_options(components: list[Component], pr_number: str | None = N
         image = component.container_image.image
 
         result.extend((
-            "--set-template-ref", f"{component_name}={component.source.git.revision}",
-            "--set-parameter", f"{component_name}/IMAGE={image}",
-            "--set-parameter", f"{component_name}/IMAGE_TAG={prefix}{revision}",
-            "--set-parameter", f"{component_name}/DBM_IMAGE={image}",
-            "--set-parameter", f"{component_name}/DBM_IMAGE_TAG={prefix}{revision}",
-            "--set-parameter", f"{component_name}/DBM_INVOCATION={secrets.randbelow(100)}",
+            "--set-template-ref",
+            f"{component_name}={component.source.git.revision}",
+            "--set-parameter",
+            f"{component_name}/IMAGE={image}",
+            "--set-parameter",
+            f"{component_name}/IMAGE_TAG={prefix}{revision}",
+            "--set-parameter",
+            f"{component_name}/DBM_IMAGE={image}",
+            "--set-parameter",
+            f"{component_name}/DBM_IMAGE_TAG={prefix}{revision}",
+            "--set-parameter",
+            f"{component_name}/DBM_INVOCATION={secrets.randbelow(100)}",
         ))
 
         if component_name == "koku":
