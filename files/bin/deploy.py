@@ -114,10 +114,8 @@ def get_component_options(components: list[Component], pr_number: str | None = N
         ))
 
         if component_name == "koku":
-            # IMAGE_TAG used as tag suffix (not related to image path)
-            image_tag = os.environ.get("IMAGE_TAG", f"{prefix}{revision}")
             result.append("--set-parameter")
-            result.append(f"{component_name}/SCHEMA_SUFFIX=_{image_tag}_{build_number}")
+            result.append(f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{build_number}")
 
     return result
 
