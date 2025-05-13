@@ -215,7 +215,7 @@ def main() -> None:
             display("PR is not labeled to run tests in Konflux")
             return
 
-    for secret in ["koku-aws", "koku-gcp", "koku-oci"]:
+    for secret in ["koku-aws", "koku-gcp"]:
         cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"
         display(cmd)
         subprocess.run(cmd, shell=True)
