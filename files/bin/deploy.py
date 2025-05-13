@@ -68,28 +68,28 @@ class Snapshot(BaseModel):
     components: list[Component]
 
 
-def get_build_number() -> str:
-    """Use the first five digits of CHECK_RUN_ID.
+def get_run_identifier() -> str:
+    """Return the CHECK_RUN_ID used to identify this run.
 
     Default to 1 if CHECK_RUN_ID is unset or falsy value.
 
     Example:
-        31510716818 --> 31510
+        31510716818 --> "31510716818"
     """
 
     check_run_id = os.environ.get("CHECK_RUN_ID") or "1"
     try:
-        build_number = check_run_id[:5]
+        run_id = str(check_run_id)
     except TypeError:
         display("There was a problem with {check_run_id=}. Using default value of 1.")
-        build_number = "1"
+        run_id = "1"
 
-    return build_number
+    return run_id
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
     prefix = f"pr-{pr_number}-" if pr_number else ""
-    build_number = get_build_number()
+    build_number = get_run_identifier()
 
     result = []
 
@@ -114,6 +114,7 @@ def get_component_options(components: list[Component], pr_number: str | None = N
         ))
 
         if component_name == "koku":
+            # IMAGE_TAG used as tag suffix (not related to image path)
             image_tag = os.environ.get("IMAGE_TAG", f"{prefix}{revision}")
             result.append("--set-parameter")
             result.append(f"{component_name}/SCHEMA_SUFFIX=_{image_tag}_{build_number}")
@@ -161,27 +162,13 @@ def get_pr_labels(
     return {item["name"] for item in data["labels"]}
 
 
-def display(command: str | t.Sequence[t.Any], no_log_values: t.Sequence[t.Any] | None = None) -> None:
+def display(command: str | t.Sequence[t.Any]) -> None:
     if isinstance(command, str):
         quoted = [command]
     else:
         quoted = [shlex.quote(str(arg)) for arg in command]
 
-    if no_log_values is None:
-        print(" ".join(quoted), flush=True)
-        return
-
-    sanitized = []
-    redacted = "*" * 8
-    for arg in quoted:
-        for value in no_log_values:
-            if value in arg:
-                sanitized.append(arg.replace(value, redacted))
-                break
-        else:
-            sanitized.append(arg)
-
-    print(" ".join(sanitized), flush=True)
+    print(" ".join(quoted), flush=True)
 
 
 def main() -> None:
@@ -209,7 +196,6 @@ def main() -> None:
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
-    no_log_values = []
 
     if "ok-to-skip-smokes" in labels:
         display("PR labeled to skip smoke tests")
@@ -229,19 +215,6 @@ def main() -> None:
             display("PR is not labeled to run tests in Konflux")
             return
 
-        # Credentials
-        aws_credentials_eph = os.environ.get("AWS_CREDENTIALS_EPH")
-        gcp_credentials_eph = os.environ.get("GCP_CREDENTIALS_EPH")
-        oci_credentials_eph = os.environ.get("OCI_CREDENTIALS_EPH")
-        oci_config_eph = os.environ.get("OCI_CONFIG_EPH")
-
-        no_log_values = [
-            aws_credentials_eph,
-            gcp_credentials_eph,
-            oci_credentials_eph,
-            oci_config_eph,
-        ]
-
     for secret in ["koku-aws", "koku-gcp", "koku-oci"]:
         cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"
         display(cmd)
@@ -258,16 +231,15 @@ def main() -> None:
         "--frontends", deploy_frontends,
         "--no-single-replicas",
         "--set-parameter", "rbac/MIN_REPLICAS=1",
-        "--set-parameter",
         "--set-parameter", "trino/HIVE_PROPERTIES_FILE=glue.properties",
         "--set-parameter", "trino/GLUE_PROPERTIES_FILE=hive.properties",
         *components_arg,
         *components_with_resources_arg,
         *extra_deploy_args.split(),
-        *get_component_options(pr_number),
+        *get_component_options(snapshot.components, pr_number),
     ]  # fmt: off
 
-    display(command, no_log_values)
+    display(command)
 
     if args.check:
         sys.exit()
