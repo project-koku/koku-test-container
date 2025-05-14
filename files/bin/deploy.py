@@ -79,7 +79,7 @@ def get_run_identifier() -> str:
         CHECK_RUN_ID not set     --> "c91a0f3d-4dbe-4b3b-9e5d-92b542f9f9f7"
     """
     check_run_id = os.environ.get("CHECK_RUN_ID")
-    return str(check_run_id) if check_run_id else str(uuid.uuid4())
+    return str(check_run_id) if check_run_id else uuid.uuid4().hex[:8]
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
