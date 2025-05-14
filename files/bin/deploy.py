@@ -72,7 +72,7 @@ class Snapshot(BaseModel):
 def get_run_identifier() -> str:
     """Return the CHECK_RUN_ID used to identify this run.
 
-    If CHECK_RUN_ID is unset or falsy, return a random string to ensure uniqueness.
+    If CHECK_RUN_ID is unset or falsy, return a short, base64-encoded random string.
 
     Example:
         CHECK_RUN_ID=31510716818 --> "31510716818"
