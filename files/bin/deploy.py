@@ -9,6 +9,7 @@ import subprocess
 import sys
 import typing as t
 import urllib.request
+import uuid
 
 from itertools import chain
 from urllib.error import HTTPError
@@ -68,19 +69,48 @@ class Snapshot(BaseModel):
     components: list[Component]
 
 
+def get_run_identifier() -> str:
+    """Return the CHECK_RUN_ID used to identify this run.
+
+    If CHECK_RUN_ID is unset or falsy, return a short, base64-encoded random string.
+
+    Example:
+        CHECK_RUN_ID=31510716818 --> "31510716818"
+        CHECK_RUN_ID not set     --> "c91a0f3d-4dbe-4b3b-9e5d-92b542f9f9f7"
+    """
+    check_run_id = os.environ.get("CHECK_RUN_ID")
+    return str(check_run_id) if check_run_id else uuid.uuid4().hex[:8]
+
+
 def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
     prefix = f"pr-{pr_number}-" if pr_number else ""
+    build_number = get_run_identifier()
+
     result = []
+
     for component in components:
         component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or component.name
+        revision = component.source.git.revision[:7]
+        image = component.container_image.image
+
         result.extend((
-            "--set-template-ref", f"{component_name}={component.source.git.revision}",
-            "--set-parameter", f"{component_name}/IMAGE={component.container_image.image}",
-            "--set-parameter", f"{component_name}/IMAGE_TAG={prefix}{component.source.git.revision[:7]}",
-            "--set-parameter", f"{component_name}/DBM_IMAGE={component.container_image.image}",
-            "--set-parameter", f"{component_name}/DBM_IMAGE_TAG={prefix}{component.source.git.revision[:7]}",
-            "--set-parameter", f"{component_name}/DBM_INVOCATION={secrets.randbelow(100)}",
-        ))  # fmt: off
+            "--set-template-ref",
+            f"{component_name}={component.source.git.revision}",
+            "--set-parameter",
+            f"{component_name}/IMAGE={image}",
+            "--set-parameter",
+            f"{component_name}/IMAGE_TAG={prefix}{revision}",
+            "--set-parameter",
+            f"{component_name}/DBM_IMAGE={image}",
+            "--set-parameter",
+            f"{component_name}/DBM_IMAGE_TAG={prefix}{revision}",
+            "--set-parameter",
+            f"{component_name}/DBM_INVOCATION={secrets.randbelow(100)}",
+        ))
+
+        if component_name == "koku":
+            result.append("--set-parameter")
+            result.append(f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{build_number}")
 
     return result
 
@@ -125,27 +155,13 @@ def get_pr_labels(
     return {item["name"] for item in data["labels"]}
 
 
-def display(command: str | t.Sequence[t.Any], no_log_values: t.Sequence[t.Any] | None = None) -> None:
+def display(command: str | t.Sequence[t.Any]) -> None:
     if isinstance(command, str):
         quoted = [command]
     else:
         quoted = [shlex.quote(str(arg)) for arg in command]
 
-    if no_log_values is None:
-        print(" ".join(quoted), flush=True)
-        return
-
-    sanitized = []
-    redacted = "*" * 8
-    for arg in quoted:
-        for value in no_log_values:
-            if value in arg:
-                sanitized.append(arg.replace(value, redacted))
-                break
-        else:
-            sanitized.append(arg)
-
-    print(" ".join(sanitized), flush=True)
+    print(" ".join(quoted), flush=True)
 
 
 def main() -> None:
@@ -173,8 +189,6 @@ def main() -> None:
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
-    cred_params = []
-    no_log_values = []
 
     if "ok-to-skip-smokes" in labels:
         display("PR labeled to skip smoke tests")
@@ -194,49 +208,31 @@ def main() -> None:
             display("PR is not labeled to run tests in Konflux")
             return
 
-        # Credentials
-        aws_credentials_eph = os.environ.get("AWS_CREDENTIALS_EPH")
-        gcp_credentials_eph = os.environ.get("GCP_CREDENTIALS_EPH")
-        oci_credentials_eph = os.environ.get("OCI_CREDENTIALS_EPH")
-        oci_config_eph = os.environ.get("OCI_CONFIG_EPH")
-
-        cred_params = [
-            "--set-parameter", f"koku/AWS_CREDENTIALS_EPH={aws_credentials_eph}",
-            "--set-parameter", f"koku/GCP_CREDENTIALS_EPH={gcp_credentials_eph}",
-            "--set-parameter", f"koku/OCI_CREDENTIALS_EPH={oci_credentials_eph}",
-            "--set-parameter", f"koku/OCI_CONFIG_EPH={oci_config_eph}",
-        ]  # fmt: off
-
-        no_log_values = [
-            aws_credentials_eph,
-            gcp_credentials_eph,
-            oci_credentials_eph,
-            oci_config_eph,
-        ]
-
-    for secret in ["koku-aws", "koku-gcp", "koku-oci"]:
+    for secret in ["koku-aws", "koku-gcp"]:
         cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"
         display(cmd)
         subprocess.run(cmd, shell=True)
 
     command = [
         "bonfire", "deploy",
+        app_name,
         "--source", "appsre",
         "--ref-env", ref_env,
         "--namespace", namespace,
         "--timeout", str(deploy_timeout),
         "--optional-deps-method", optional_deps_method,
         "--frontends", deploy_frontends,
+        "--no-single-replicas",
         "--set-parameter", "rbac/MIN_REPLICAS=1",
-        *cred_params,
+        "--set-parameter", "trino/HIVE_PROPERTIES_FILE=glue.properties",
+        "--set-parameter", "trino/GLUE_PROPERTIES_FILE=hive.properties",
         *components_arg,
         *components_with_resources_arg,
         *extra_deploy_args.split(),
         *get_component_options(snapshot.components, pr_number),
-        app_name,
     ]  # fmt: off
 
-    display(command, no_log_values)
+    display(command)
 
     if args.check:
         sys.exit()
