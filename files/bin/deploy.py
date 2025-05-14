@@ -9,6 +9,7 @@ import subprocess
 import sys
 import typing as t
 import urllib.request
+import uuid
 
 from itertools import chain
 from urllib.error import HTTPError
@@ -71,20 +72,14 @@ class Snapshot(BaseModel):
 def get_run_identifier() -> str:
     """Return the CHECK_RUN_ID used to identify this run.
 
-    Default to 1 if CHECK_RUN_ID is unset or falsy value.
+    If CHECK_RUN_ID is unset or falsy, return a random string to ensure uniqueness.
 
     Example:
-        31510716818 --> "31510716818"
+        CHECK_RUN_ID=31510716818 --> "31510716818"
+        CHECK_RUN_ID not set     --> "c91a0f3d-4dbe-4b3b-9e5d-92b542f9f9f7"
     """
-
-    check_run_id = os.environ.get("CHECK_RUN_ID") or "1"
-    try:
-        run_id = str(check_run_id)
-    except TypeError:
-        display("There was a problem with {check_run_id=}. Using default value of 1.")
-        run_id = "1"
-
-    return run_id
+    check_run_id = os.environ.get("CHECK_RUN_ID")
+    return str(check_run_id) if check_run_id else str(uuid.uuid4())
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
