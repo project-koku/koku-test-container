@@ -91,7 +91,8 @@ class IQERunner:
         job_name = f"JOB_NAME={self.job_name}"
         build_number = f"BUILD_NUMBER={self.build_number}"
         build_url = f"BUILD_URL={self.build_url}"
-        env_var_params = [job_name, build_number, build_url]
+        iqe_parallel_enabled = "IQE_PARALLEL_ENABLED=false"
+        env_var_params = [job_name, build_number, build_url, iqe_parallel_enabled]
         return chain.from_iterable(("--env-var", var) for var in env_var_params)
 
     @cached_property
