@@ -74,7 +74,7 @@ def get_run_identifier() -> str:
     Example:
         koku-ci-5rxkp --> 5rxkp
     """
-    pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME")
+    pipeline_run_name = os.environ.get("NS_REQUESTER")
     return pipeline_run_name.rsplit("-", 1)[1]
 
 
