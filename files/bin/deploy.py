@@ -9,7 +9,6 @@ import subprocess
 import sys
 import typing as t
 import urllib.request
-import uuid
 
 from itertools import chain
 from urllib.error import HTTPError
@@ -70,16 +69,13 @@ class Snapshot(BaseModel):
 
 
 def get_run_identifier() -> str:
-    """Return the CHECK_RUN_ID used to identify this run.
-
-    If CHECK_RUN_ID is unset or falsy, return a short, base64-encoded random string.
+    """Get the run-id from the pipeline run name
 
     Example:
-        CHECK_RUN_ID=31510716818 --> "31510716818"
-        CHECK_RUN_ID not set     --> "c91a0f3d-4dbe-4b3b-9e5d-92b542f9f9f7"
+        koku-ci-5rxkp --> 5rxkp
     """
-    check_run_id = os.environ.get("CHECK_RUN_ID")
-    return str(check_run_id) if check_run_id else uuid.uuid4().hex[:8]
+    pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME")
+    return pipeline_run_name.rsplit("-", 1)[1]
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
