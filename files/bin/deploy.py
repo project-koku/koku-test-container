@@ -7,65 +7,18 @@ import secrets
 import shlex
 import subprocess
 import sys
-import typing as t
 import urllib.request
 
+from collections.abc import Sequence
 from itertools import chain
+from typing import Any
 from urllib.error import HTTPError
 
 import fuzzydate
 
-from pydantic import AnyUrl
-from pydantic import BaseModel
-from pydantic import ConfigDict
-from pydantic import Field
-from pydantic import model_validator
+from models import Component
+from models import Snapshot
 from pydantic import ValidationError
-
-
-class Git(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    url: AnyUrl
-    revision: str
-
-
-class Source(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    git: Git
-
-
-class ContainerImage(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    image: str
-    sha: str
-
-
-class Component(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    name: str
-    container_image: ContainerImage = Field(alias="containerImage")
-    source: Source
-
-    @model_validator(mode="before")
-    @classmethod
-    def container_image_validator(cls, data: t.Any) -> t.Any:
-        if not isinstance(data, t.MutableMapping):
-            raise ValueError(f"{data} is not of mapping type")
-
-        image, sha = data["containerImage"].split("@sha256:")
-        data["containerImage"] = ContainerImage(image=image, sha=sha)
-        return data
-
-
-class Snapshot(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    application: str
-    components: list[Component]
 
 
 def get_run_identifier() -> str:
@@ -104,9 +57,10 @@ def get_component_options(components: list[Component], pr_number: str | None = N
         ))
 
         if component_name == "koku":
-            result.append("--set-parameter")
-            result.append(f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{build_number}")
-
+            result.extend((
+                "--set-parameter",
+                f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{build_number}",
+            ))
     return result
 
 
@@ -150,7 +104,7 @@ def get_pr_labels(
     return {item["name"] for item in data["labels"]}
 
 
-def display(command: str | t.Sequence[t.Any]) -> None:
+def display(command: str | Sequence[Any]) -> None:
     if isinstance(command, str):
         quoted = [command]
     else:
