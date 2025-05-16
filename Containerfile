@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9-minimal:9.4-1227.1726694542
+FROM registry.access.redhat.com/ubi9-minimal:9.6-1747218906
 
 RUN microdnf install -y \
     jq \
