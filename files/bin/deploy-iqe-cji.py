@@ -14,6 +14,8 @@ import sh
 from deploy import display
 from deploy import get_pr_labels
 from deploy import get_timeout
+from models import Snapshot
+from pydantic import ValidationError
 from sh import bonfire
 from sh import oc
 
@@ -43,6 +45,12 @@ class IQERunner:
         self.pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME")
         self.selenium = os.environ.get("IQE_SELENIUM", "")
 
+        snapshot_str = os.environ.get("SNAPSHOT", "")
+        try:
+            self.snapshot = Snapshot.model_validate_json(snapshot_str)
+        except ValidationError:
+            sys.exit(f"Missing or invalid SNAPSHOT: {snapshot_str}")
+
     @cached_property
     def job_name(self) -> str:
         """Get the job name from the pipeline run name
@@ -63,7 +71,8 @@ class IQERunner:
 
     @cached_property
     def schema_suffix(self) -> str:
-        revision = os.environ.get("REVISION", "")[:7]
+        # assume the component we care about is first!
+        revision = self.snapshot.components[0].source.git.revision[:7]
         prefix = f"pr-{self.pr_number}-" if self.pr_number else ""
         return f"SCHEMA_SUFFIX=_{prefix}{revision}_{self.run_identifier}"
 
