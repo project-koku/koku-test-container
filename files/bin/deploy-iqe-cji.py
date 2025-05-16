@@ -70,8 +70,7 @@ class IQERunner:
     def schema_suffix(self) -> str:
         revision = os.environ.get("REVISION", "")[:7]
         prefix = f"pr-{self.pr_number}-" if self.pr_number else ""
-        suffix = f"{self.component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{self.get_run_identifier}"
-        return suffix
+        return f"{self.component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{self.get_run_identifier}"
 
     @cached_property
     def build_url(self) -> str:
