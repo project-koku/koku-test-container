@@ -43,7 +43,7 @@ class IQERunner:
         self.pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME") or ""
         self.selenium = os.environ.get("IQE_SELENIUM", "")
 
-    @property
+    @cached_property
     def job_name(self) -> str:
         """Get the job name from the pipeline run name
 
@@ -53,30 +53,25 @@ class IQERunner:
         return self.pipeline_run_name.rsplit("-", 1)[0]
 
     @cached_property
-    def build_number(self) -> str:
-        """Use the first five digits of CHECK_RUN_ID.
-
-        Default to 1 if CHECK_RUN_ID is unset or falsy value.
+    def run_identifier(self) -> str:
+        """Get the run-id from the pipeline run name
 
         Example:
-            31510716818 --> 31510
+            koku-ci-5rxkp --> 5rxkp
         """
+        return self.pipeline_run_name.rsplit("-", 1)[1]
 
-        check_run_id = os.environ.get("CHECK_RUN_ID") or "1"
-        try:
-            build_number = check_run_id[:5]
-        except TypeError:
-            display("There was a problem with {check_run_id=}. Using default value of 1.")
-            build_number = "1"
-
-        return build_number
+    @cached_property
+    def schema_suffix(self) -> str:
+        revision = os.environ.get("REVISION", "")[:7]
+        prefix = f"pr-{self.pr_number}-" if self.pr_number else ""
+        return f"SCHEMA_SUFFIX=_{prefix}{revision}_{self.run_identifier}"
 
     @cached_property
     def build_url(self) -> str:
         """Create a build URL for the pipeline run"""
-
         application = os.environ.get("APPLICATION")
-        return f"https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/{application}/pipelineruns/{self.pipeline_run_name}"
+        return f"https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com/ns/cost-mgmt-dev-tenant/applications/{application}/pipelineruns/{self.pipeline_run_name}"
 
     @cached_property
     def selenium_arg(self) -> list[str]:
@@ -89,10 +84,11 @@ class IQERunner:
     @cached_property
     def iqe_env_vars_arg(self) -> t.Iterable[str]:
         job_name = f"JOB_NAME={self.job_name}"
-        build_number = f"BUILD_NUMBER={self.build_number}"
+        build_number = f"BUILD_NUMBER={self.run_identifier}"
         build_url = f"BUILD_URL={self.build_url}"
         iqe_parallel_enabled = "IQE_PARALLEL_ENABLED=false"
-        env_var_params = [job_name, build_number, build_url, iqe_parallel_enabled]
+        schema_suffix = self.schema_suffix
+        env_var_params = [job_name, build_number, build_url, iqe_parallel_enabled, schema_suffix]
         return chain.from_iterable(("--env-var", var) for var in env_var_params)
 
     @cached_property
@@ -199,7 +195,7 @@ class IQERunner:
         )
         cji = json.loads(data)
         job_map = cji["status"]["jobMap"]
-        if not all(v == "Complete" for v in job_map.values()):
+        if any(v != "Complete" for v in job_map.values()):
             print(f"\nSome jobs failed: {job_map}", flush=True)
             sys.exit(1)
 
