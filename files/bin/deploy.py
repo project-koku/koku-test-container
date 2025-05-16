@@ -74,7 +74,7 @@ def get_run_identifier() -> str:
     Example:
         koku-ci-5rxkp --> 5rxkp
     """
-    return os.environ.get("NS_REQUESTER").rsplit("-", 1)[1]
+    return os.environ.get("PIPELINE_RUN_NAME").rsplit("-", 1)[1]
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
