@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import typing as t
+import uuid
 
 from functools import cached_property
 from itertools import chain
@@ -53,23 +54,24 @@ class IQERunner:
         return self.pipeline_run_name.rsplit("-", 1)[0]
 
     @cached_property
-    def build_number(self) -> str:
-        """Use the first five digits of CHECK_RUN_ID.
+    def get_run_identifier(self) -> str:
+        """Return the CHECK_RUN_ID used to identify this run.
 
-        Default to 1 if CHECK_RUN_ID is unset or falsy value.
+        If CHECK_RUN_ID is unset or falsy, return a short, base64-encoded random string.
 
         Example:
-            31510716818 --> 31510
+            CHECK_RUN_ID=31510716818 --> "31510716818"
+            CHECK_RUN_ID not set     --> "c91a0f3d-4dbe-4b3b-9e5d-92b542f9f9f7"
         """
+        check_run_id = os.environ.get("CHECK_RUN_ID")
+        return str(check_run_id) if check_run_id else uuid.uuid4().hex[:8]
 
-        check_run_id = os.environ.get("CHECK_RUN_ID") or "1"
-        try:
-            build_number = check_run_id[:5]
-        except TypeError:
-            display("There was a problem with {check_run_id=}. Using default value of 1.")
-            build_number = "1"
-
-        return build_number
+    @cached_property
+    def schema_suffix(self) -> str:
+        revision = os.environ.get("REVISION", "")[:7]
+        prefix = f"pr-{self.pr_number}-" if self.pr_number else ""
+        suffix = f"{self.component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{self.get_run_identifier}"
+        return suffix
 
     @cached_property
     def build_url(self) -> str:
@@ -92,7 +94,8 @@ class IQERunner:
         build_number = f"BUILD_NUMBER={self.build_number}"
         build_url = f"BUILD_URL={self.build_url}"
         iqe_parallel_enabled = "IQE_PARALLEL_ENABLED=false"
-        env_var_params = [job_name, build_number, build_url, iqe_parallel_enabled]
+        schema_suffix = self.schema_suffix
+        env_var_params = [job_name, build_number, build_url, iqe_parallel_enabled, schema_suffix]
         return chain.from_iterable(("--env-var", var) for var in env_var_params)
 
     @cached_property
