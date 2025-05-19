@@ -100,7 +100,7 @@ class IQERunner:
     @cached_property
     def iqe_env_vars_arg(self) -> t.Iterable[str]:
         job_name = f"JOB_NAME={self.job_name}"
-        build_number = f"BUILD_NUMBER={self.run_identifier}"
+        build_number = f"BUILD_NUMBER={self.check_run_id}"
         build_url = f"BUILD_URL={self.build_url}"
         iqe_parallel_enabled = "IQE_PARALLEL_ENABLED=false"
         schema_suffix = self.schema_suffix
