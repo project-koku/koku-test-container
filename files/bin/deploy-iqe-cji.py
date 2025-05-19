@@ -43,6 +43,7 @@ class IQERunner:
         self.iqe_requirements_priority = os.environ.get("IQE_REQUIREMENTS_PRIORITY", "")
         self.iqe_test_importance = os.environ.get("IQE_TEST_IMPORTANCE", "")
         self.pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME")
+        self.check_run_id = self.get_check_run_identifier
         self.selenium = os.environ.get("IQE_SELENIUM", "")
 
         snapshot_str = os.environ.get("SNAPSHOT", "")
@@ -50,6 +51,21 @@ class IQERunner:
             self.snapshot = Snapshot.model_validate_json(snapshot_str)
         except ValidationError:
             sys.exit(f"Missing or invalid SNAPSHOT: {snapshot_str}")
+
+    @cached_property
+    def get_check_run_identifier(self) -> str:
+        """Get a numeric build identifier from CHECK_RUN_ID or fallback to '1'.
+        This value must be an integer (Ibutsu).
+
+        Example:
+            CHECK_RUN_ID=31510716818 --> '31510'
+            CHECK_RUN_ID=abcde       --> '1'
+            CHECK_RUN_ID not set     --> '1'
+        """
+        check_run_id = os.environ.get("CHECK_RUN_ID", "")
+        if check_run_id.isdigit():
+            return check_run_id[:5]
+        return "1"
 
     @cached_property
     def job_name(self) -> str:
@@ -61,20 +77,11 @@ class IQERunner:
         return self.pipeline_run_name.rsplit("-", 1)[0]
 
     @cached_property
-    def run_identifier(self) -> str:
-        """Get the run-id from the pipeline run name
-
-        Example:
-            koku-ci-5rxkp --> 5rxkp
-        """
-        return self.pipeline_run_name.rsplit("-", 1)[1]
-
-    @cached_property
     def schema_suffix(self) -> str:
         # assume the component we care about is first!
         revision = self.snapshot.components[0].source.git.revision[:7]
         prefix = f"pr-{self.pr_number}-" if self.pr_number else ""
-        return f"SCHEMA_SUFFIX=_{prefix}{revision}_{self.run_identifier}"
+        return f"SCHEMA_SUFFIX=_{prefix}{revision}_{self.check_run_id}"
 
     @cached_property
     def build_url(self) -> str:

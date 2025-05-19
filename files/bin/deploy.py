@@ -21,19 +21,24 @@ from models import Snapshot
 from pydantic import ValidationError
 
 
-def get_run_identifier() -> str:
-    """Get the run-id from the pipeline run name
+def get_check_run_identifier() -> str:
+    """Get a numeric build identifier from CHECK_RUN_ID or fallback to '1'.
+    This value must be an integer (Ibutsu).
 
     Example:
-        koku-ci-5rxkp --> 5rxkp
+        CHECK_RUN_ID=31510716818 --> '31510'
+        CHECK_RUN_ID=abcde       --> '1'
+        CHECK_RUN_ID not set     --> '1'
     """
-    return os.environ.get("PIPELINE_RUN_NAME").rsplit("-", 1)[1]
+    check_run_id = os.environ.get("CHECK_RUN_ID", "")
+    if check_run_id.isdigit():
+        return check_run_id[:5]
+    return "1"
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
     prefix = f"pr-{pr_number}-" if pr_number else ""
-    build_number = get_run_identifier()
-
+    build_number = get_check_run_identifier()
     result = []
 
     for component in components:
