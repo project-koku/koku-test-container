@@ -8,7 +8,7 @@ main() {
 
     export BONFIRE_NS_REQUESTER="$ns_requester"
 
-    ns="$(bonfire namespace reserve --pool "$namespace_pool")" 
+    ns="$(bonfire namespace reserve --pool "$namespace_pool" --duration 6h30m)"
     echo -n "${ns//'\n'}" > "$ns_file"
 }
 
