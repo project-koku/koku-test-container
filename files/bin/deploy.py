@@ -85,6 +85,9 @@ def get_timeout(env_var: str, labels: set[str] | None = None) -> int:
         print(f"{exc}. Using default value of 2h")
         timeout = 2 * 60 * 60
 
+    # If the timeout was not set via env var (defaulted to 2h), and the PR
+    # includes the "full-run-smoke-tests" label, apply an extended timeout of 8h
+    # as a fallback safeguard to avoid premature termination during long runs.
     if labels and "full-run-smoke-tests" in labels:
         timeout = 8 * 60 * 60
 
