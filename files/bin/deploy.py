@@ -86,7 +86,7 @@ def get_timeout(env_var: str, labels: set[str] | None = None) -> int:
         timeout = 2 * 60 * 60
 
     if labels and "full-run-smoke-tests" in labels:
-        timeout = 6 * 60 * 60
+        timeout = 8 * 60 * 60
 
     return int(timeout)
 
