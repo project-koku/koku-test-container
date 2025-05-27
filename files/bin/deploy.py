@@ -151,9 +151,8 @@ def main() -> None:
         display("PR labeled to skip smoke tests")
         return
 
-    if "koku" in snapshot_components:
-        if "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
-            sys.exit("Missing smoke tests labels.")
+    if "koku" in snapshot_components and "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
+        sys.exit("Missing smoke tests labels.")
 
     for secret in ["koku-aws", "koku-gcp"]:
         cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"
