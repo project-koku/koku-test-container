@@ -218,21 +218,17 @@ class IQERunner:
         print(f"\nAll jobs succeeded: {job_map}", flush=True)
 
     def run(self) -> None:
-        display("Reached updated version of the script - labels check starting...")
-        display(f"labels: {self.pr_labels}")
-        # If it's a PR and has the "ok-to-skip-smokes" label
-        if self.pr_labels and "ok-to-skip-smokes" in self.pr_labels:
-            display("PR labeled to skip smoke tests")
-            return
-
         # Skip Konflux tests unless explicitly labeled.
         # This prevents tests from running in both Jenkins and Konflux and can be
         # removed when Konflux increases the integration test timeout and
         # Jenkins tests are disabled.
         #
         # https://issues.redhat.com/browse/KONFLUX-5449
-        if self.pr_labels is not None:
-            # This is likely a PR run
+        if self.pr_labels:
+            if "ok-to-skip-smokes" in self.pr_labels:
+                display("PR labeled to skip smoke tests")
+                return
+
             if "run-konflux-tests" not in self.pr_labels:
                 display("PR is not labeled to run tests in Konflux")
                 return
@@ -240,7 +236,7 @@ class IQERunner:
             if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
                 sys.exit("Missing smoke tests labels.")
         else:
-            # No PR labels — likely a nightly or manual snapshot run
+            # Labels are empty (nightly/manual snapshot scenario)
             display("[INFO] No PR labels found. Assuming this is a nightly or manual test run.")
             display("[INFO] Proceeding with full smoke tests...")
 
