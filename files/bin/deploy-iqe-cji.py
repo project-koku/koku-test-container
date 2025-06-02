@@ -218,6 +218,8 @@ class IQERunner:
         print(f"\nAll jobs succeeded: {job_map}", flush=True)
 
     def run(self) -> None:
+        display("Reached updated version of the script - labels check starting...")
+        display(f"labels: {self.pr_labels}")
         # If it's a PR and has the "ok-to-skip-smokes" label
         if self.pr_labels and "ok-to-skip-smokes" in self.pr_labels:
             display("PR labeled to skip smoke tests")
