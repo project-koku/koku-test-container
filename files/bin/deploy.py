@@ -122,6 +122,7 @@ def display(command: str | Sequence[Any]) -> None:
 
 
 def main() -> None:
+    display("Deploying snapshot...")
     args = parse_args()
     namespace = args.namespace
     requester = args.requester
@@ -146,7 +147,7 @@ def main() -> None:
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
-
+    display(f"pr_number: {pr_number}")
     if pr_number:
         if "ok-to-skip-smokes" in labels:
             display("PR labeled to skip smoke tests")
