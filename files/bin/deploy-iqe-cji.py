@@ -218,7 +218,8 @@ class IQERunner:
         print(f"\nAll jobs succeeded: {job_map}", flush=True)
 
     def run(self) -> None:
-        if "ok-to-skip-smokes" in self.pr_labels:
+        # If it's a PR and has the "ok-to-skip-smokes" label
+        if self.pr_labels and "ok-to-skip-smokes" in self.pr_labels:
             display("PR labeled to skip smoke tests")
             return
 
@@ -229,12 +230,18 @@ class IQERunner:
         #
         # https://issues.redhat.com/browse/KONFLUX-5449
         if self.pr_labels is not None:
+            # This is likely a PR run
             if "run-konflux-tests" not in self.pr_labels:
                 display("PR is not labeled to run tests in Konflux")
                 return
 
-            if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
+            if "smokes-required" in self.pr_labels and not any(
+                    label.endswith("smoke-tests") for label in self.pr_labels):
                 sys.exit("Missing smoke tests labels.")
+        else:
+            # No PR labels — likely a nightly or manual snapshot run
+            display("[INFO] No PR labels found. Assuming this is a nightly or manual test run.")
+            display("[INFO] Proceeding with full smoke tests...")
 
         self.run_pod()
 
@@ -252,7 +259,7 @@ class IQERunner:
             "--for", "condition=JobInvocationComplete",
             "--namespace", self.namespace,
             f"cji/{self.component_name}",
-        ])  # fmt: off
+        ])
 
         self.check_cji_jobs()
 
