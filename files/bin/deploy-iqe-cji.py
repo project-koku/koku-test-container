@@ -259,7 +259,7 @@ class IQERunner:
             "--for", "condition=JobInvocationComplete",
             "--namespace", self.namespace,
             f"cji/{self.component_name}",
-        ])
+        ]) # fmt: off
 
         self.check_cji_jobs()
 
