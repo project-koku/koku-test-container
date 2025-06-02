@@ -228,12 +228,13 @@ class IQERunner:
         # Jenkins tests are disabled.
         #
         # https://issues.redhat.com/browse/KONFLUX-5449
-        if "run-konflux-tests" not in self.pr_labels:
-            display("PR is not labeled to run tests in Konflux")
-            return
+        if self.pr_labels is not None:
+            if "run-konflux-tests" not in self.pr_labels:
+                display("PR is not labeled to run tests in Konflux")
+                return
 
-        if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
-            sys.exit("Missing smoke tests labels.")
+            if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
+                sys.exit("Missing smoke tests labels.")
 
         self.run_pod()
 
