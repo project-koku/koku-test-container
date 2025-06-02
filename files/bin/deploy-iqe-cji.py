@@ -235,8 +235,7 @@ class IQERunner:
                 display("PR is not labeled to run tests in Konflux")
                 return
 
-            if "smokes-required" in self.pr_labels and not any(
-                    label.endswith("smoke-tests") for label in self.pr_labels):
+            if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
                 sys.exit("Missing smoke tests labels.")
         else:
             # No PR labels — likely a nightly or manual snapshot run
@@ -259,7 +258,7 @@ class IQERunner:
             "--for", "condition=JobInvocationComplete",
             "--namespace", self.namespace,
             f"cji/{self.component_name}",
-        ]) # fmt: off
+        ])  # fmt: off
 
         self.check_cji_jobs()
 
