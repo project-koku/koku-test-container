@@ -147,23 +147,27 @@ def main() -> None:
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
 
-    if "ok-to-skip-smokes" in labels:
-        display("PR labeled to skip smoke tests")
-        return
-
-    if "koku" in snapshot_components:
-        if "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
-            sys.exit("Missing smoke tests labels.")
-
-        # Skip Konflux tests unless explicitly labeled.
-        # This prevents tests from running in both Jenkins and Konflux and can be
-        # removed when Konflux increases the integration test timeout and
-        # Jenkins tests are disabled.
-        #
-        # https://issues.redhat.com/browse/KONFLUX-5449
-        if "run-konflux-tests" not in labels:
-            display("PR is not labeled to run tests in Konflux")
+    if pr_number:
+        if "ok-to-skip-smokes" in labels:
+            display("PR labeled to skip smoke tests")
             return
+
+        if "koku" in snapshot_components:
+            if "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
+                sys.exit("Missing smoke tests labels.")
+
+            # Skip Konflux tests unless explicitly labeled.
+            # This prevents tests from running in both Jenkins and Konflux and can be
+            # removed when Konflux increases the integration test timeout and
+            # Jenkins tests are disabled.
+            #
+            # https://issues.redhat.com/browse/KONFLUX-5449
+            if "run-konflux-tests" not in labels:
+                display("PR is not labeled to run tests in Konflux")
+                return
+    else:
+        display("[INFO] No PR number found. Assuming nightly/manual test run.")
+        display("[INFO] Proceeding with full smoke tests...")
 
     for secret in ["koku-aws", "koku-gcp"]:
         cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"
