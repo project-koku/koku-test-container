@@ -233,8 +233,7 @@ class IQERunner:
                 display("PR is not labeled to run tests in Konflux")
                 return
 
-            if "smokes-required" in self.pr_labels and not any(
-                    label.endswith("smoke-tests") for label in self.pr_labels):
+            if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
                 sys.exit("Missing smoke tests labels.")
         else:
             # Labels are empty (nightly/manual snapshot scenario)
