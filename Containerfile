@@ -3,7 +3,8 @@ FROM registry.access.redhat.com/ubi9-minimal:9.6-1747218906
 RUN microdnf install -y \
     jq \
     python3.11 \
-    && rm -rf /var/cache/yum/*
+    tar \
+ && rm -rf /var/cache/yum/*
 
 ENV VENV=/opt/venvs/koku-test
 ENV PYTHON="${VENV}/bin/python"
