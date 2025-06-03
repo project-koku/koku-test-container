@@ -7,6 +7,10 @@ main() {
 
     collect_k8s_artifacts "$ns" "$logs_dir"
     get_pod_logs "$ns" "$logs_dir"
+
+    # Compress the collected logs
+    echo "Compressing logs into tar.gz..."
+    tar -czf "${artifacts_dir}/k8s_artifacts/${ns}.tar.gz" -C "${artifacts_dir}/k8s_artifacts" "$ns"
 }
 
 collect_k8s_artifacts() {
