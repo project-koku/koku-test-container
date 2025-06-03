@@ -4,6 +4,7 @@ RUN microdnf install -y \
     jq \
     python3.11 \
     tar \
+    gzip \
  && rm -rf /var/cache/yum/*
 
 ENV VENV=/opt/venvs/koku-test
