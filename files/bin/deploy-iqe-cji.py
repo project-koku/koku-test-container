@@ -5,8 +5,8 @@ import json
 import os
 import sys
 import typing as t
-from datetime import datetime
 
+from datetime import datetime
 from functools import cached_property
 from itertools import chain
 
