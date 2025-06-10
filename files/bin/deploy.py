@@ -22,7 +22,7 @@ from models import Snapshot
 from pydantic import ValidationError
 
 
-def get_check_run_identifier(self) -> str:
+def get_check_run_identifier() -> str:
     """Get a unique build identifier for Ibutsu dashboard grouping.
 
     - If IS_SCHEDULE_JOB is True: return date in YYMMDD format (e.g., 250609)
