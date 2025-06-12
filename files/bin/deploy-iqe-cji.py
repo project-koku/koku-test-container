@@ -242,6 +242,8 @@ class IQERunner:
             # Labels are empty (nightly/manual snapshot scenario)
             display("[INFO] No PR labels found. Assuming this is a nightly or manual test run.")
             display("[INFO] Proceeding with full smoke tests...")
+            display(f"Check run ID: {self.check_run_id}")
+            display(f"IS_SCHEDULED_TEST_JOB: {os.environ.get('IS_SCHEDULED_TEST_JOB', 'false')}")
 
         self.run_pod()
 
