@@ -23,14 +23,7 @@ from pydantic import ValidationError
 
 
 def get_check_run_identifier() -> str:
-    """Get a unique build identifier for Ibutsu dashboard grouping.
-
-    - If IS_SCHEDULED_TEST_JOB is True: return date in YYMMDD format (e.g., 250609)
-    - Else: fallback to CHECK_RUN_ID[:5] or '1'
-    """
-    is_schedule = os.environ.get("IS_SCHEDULED_TEST_JOB", "").lower() == "true"
-    if is_schedule:
-        return datetime.utcnow().strftime("%y%m%d")
+    """Get a unique build identifier for Ibutsu dashboard grouping."""
 
     check_run_id = os.environ.get("CHECK_RUN_ID", "")
     if check_run_id.isdigit():
@@ -41,7 +34,7 @@ def get_check_run_identifier() -> str:
 
 def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
     prefix = f"pr-{pr_number}-" if pr_number else ""
-    build_number = get_check_run_identifier()
+    check_run_id = get_check_run_identifier()
     result = []
 
     for component in components:
@@ -67,7 +60,7 @@ def get_component_options(components: list[Component], pr_number: str | None = N
         if component_name == "koku":
             result.extend((
                 "--set-parameter",
-                f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{build_number}",
+                f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{check_run_id}",
             ))
     return result
 
