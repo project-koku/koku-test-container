@@ -25,10 +25,10 @@ from pydantic import ValidationError
 def get_check_run_identifier() -> str:
     """Get a unique build identifier for Ibutsu dashboard grouping.
 
-    - If IS_SCHEDULE_JOB is True: return date in YYMMDD format (e.g., 250609)
+    - If IS_SCHEDULED_TEST_JOB is True: return date in YYMMDD format (e.g., 250609)
     - Else: fallback to CHECK_RUN_ID[:5] or '1'
     """
-    is_schedule = os.environ.get("IS_SCHEDULE_JOB", "").lower() == "true"
+    is_schedule = os.environ.get("IS_SCHEDULED_TEST_JOB", "").lower() == "true"
     if is_schedule:
         return datetime.utcnow().strftime("%y%m%d")
 
