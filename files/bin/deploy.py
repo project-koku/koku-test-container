@@ -10,7 +10,6 @@ import sys
 import urllib.request
 
 from collections.abc import Sequence
-from datetime import datetime
 from itertools import chain
 from typing import Any
 from urllib.error import HTTPError
@@ -23,7 +22,7 @@ from pydantic import ValidationError
 
 
 def get_check_run_identifier() -> str:
-    """Get a unique build identifier for Ibutsu dashboard grouping."""
+    """Get a shortened check_run_id"""
 
     check_run_id = os.environ.get("CHECK_RUN_ID", "")
     if check_run_id.isdigit():
