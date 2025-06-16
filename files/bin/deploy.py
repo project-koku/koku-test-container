@@ -10,6 +10,7 @@ import sys
 import urllib.request
 
 from collections.abc import Sequence
+from datetime import datetime
 from itertools import chain
 from typing import Any
 from urllib.error import HTTPError
@@ -22,17 +23,19 @@ from pydantic import ValidationError
 
 
 def get_check_run_identifier() -> str:
-    """Get a numeric build identifier from CHECK_RUN_ID or fallback to '1'.
-    This value must be an integer (Ibutsu).
+    """Get a unique build identifier for Ibutsu dashboard grouping.
 
-    Example:
-        CHECK_RUN_ID=31510716818 --> '31510'
-        CHECK_RUN_ID=abcde       --> '1'
-        CHECK_RUN_ID not set     --> '1'
+    - If IS_SCHEDULE_JOB is True: return date in YYMMDD format (e.g., 250609)
+    - Else: fallback to CHECK_RUN_ID[:5] or '1'
     """
+    is_schedule = os.environ.get("IS_SCHEDULE_JOB", "").lower() == "true"
+    if is_schedule:
+        return datetime.utcnow().strftime("%y%m%d")
+
     check_run_id = os.environ.get("CHECK_RUN_ID", "")
     if check_run_id.isdigit():
         return check_run_id[:5]
+
     return "1"
 
 
@@ -147,6 +150,7 @@ def main() -> None:
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
+<<<<<<< remove-konflux-tests-toggle
 
     # If the 'run-jenkins-tests' label is present, skip Konflux tests and run Jenkins tests instead.
     if "run-jenkins-tests" in labels:
@@ -160,6 +164,29 @@ def main() -> None:
     if "koku" in snapshot_components and "smokes-required" in labels and not any(
             label.endswith("smoke-tests") for label in labels):
         sys.exit("Missing smoke tests labels.")
+=======
+    if pr_number:
+        if "ok-to-skip-smokes" in labels:
+            display("PR labeled to skip smoke tests")
+            return
+>>>>>>> main
+
+        if "koku" in snapshot_components:
+            if "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
+                sys.exit("Missing smoke tests labels.")
+
+            # Skip Konflux tests unless explicitly labeled.
+            # This prevents tests from running in both Jenkins and Konflux and can be
+            # removed when Konflux increases the integration test timeout and
+            # Jenkins tests are disabled.
+            #
+            # https://issues.redhat.com/browse/KONFLUX-5449
+            if "run-konflux-tests" not in labels:
+                display("PR is not labeled to run tests in Konflux")
+                return
+    else:
+        display("[INFO] No PR number found. Assuming nightly/manual test run.")
+        display("[INFO] Proceeding with full smoke tests...")
 
     for secret in ["koku-aws", "koku-gcp"]:
         cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"

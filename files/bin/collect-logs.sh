@@ -7,6 +7,10 @@ main() {
 
     collect_k8s_artifacts "$ns" "$logs_dir"
     get_pod_logs "$ns" "$logs_dir"
+
+    # Compress the collected logs
+    echo "Compressing logs into tar.gz..."
+    tar -czf "${artifacts_dir}/k8s_artifacts/${ns}.tar.gz" -C "${artifacts_dir}/k8s_artifacts" "$ns"
 }
 
 collect_k8s_artifacts() {
@@ -29,32 +33,22 @@ get_pod_logs() {
 
     mkdir -p "$logs_dir"
 
-    # get array of pod_name:container1,container2,..,containerN for all containers in all pods
     echo "Collecting container logs..."
-    local pod_containers
-    pod_containers=("$(oc_wrapper get pods --ignore-not-found=true -n "$ns" -o "jsonpath={range .items[*]}{' '}{.metadata.name}{':'}{range .spec['containers', 'initContainers'][*]}{.name}{','}")")
 
-    for pc in "${pod_containers[@]}"; do
-        # https://stackoverflow.com/a/4444841
-        local pod=${pc%%:*}
-        local containers=${pc#*:}
-        local container
+    mapfile -t pod_lines < <(
+        oc_wrapper get pods -n "$ns" -o json |
+        jq -r '.items[] | "\(.metadata.name):\((.spec.containers + (.spec.initContainers // [])) | map(.name) | join(","))"'
+    )
+
+    for pc in "${pod_lines[@]}"; do
+        local pod="${pc%%:*}"
+        local containers="${pc#*:}"
         for container in ${containers//,/ }; do
-            oc_wrapper logs \
-                "$pod" \
-                -c "$container" \
-                -n "$ns" \
-                > "${logs_dir}/${pod}_${container}.log" \
-                2> /dev/null \
-                || continue
-            oc_wrapper logs \
-                "$pod" \
-                -c "$container" \
-                --previous \
-                -n "$ns" \
-                > "${logs_dir}/${POD}_${container}-previous.log" \
-                2> /dev/null \
-                || continue
+            oc_wrapper logs "$pod" -c "$container" -n "$ns" \
+                > "${logs_dir}/${pod}_${container}.log" 2>/dev/null || continue
+
+            oc_wrapper logs "$pod" -c "$container" --previous -n "$ns" \
+                > "${logs_dir}/${pod}_${container}-previous.log" 2>/dev/null || continue
         done
     done
 }
@@ -62,4 +56,3 @@ get_pod_logs() {
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     main "$@"
 fi
-
