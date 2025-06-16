@@ -45,6 +45,7 @@ class IQERunner:
         self.iqe_test_importance = os.environ.get("IQE_TEST_IMPORTANCE", "")
         self.pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME")
         self.check_run_id = self.get_check_run_identifier
+        self.build_number = self.get_build_number
         self.selenium = os.environ.get("IQE_SELENIUM", "")
 
         snapshot_str = os.environ.get("SNAPSHOT", "")
@@ -55,14 +56,7 @@ class IQERunner:
 
     @cached_property
     def get_check_run_identifier(self) -> str:
-        """Get a unique build identifier for Ibutsu dashboard grouping.
-
-        - If IS_SCHEDULED_TEST_JOB is True: return date in YYMMDD format (e.g., 250609)
-        - Else: fallback to CHECK_RUN_ID[:5] or '1'
-        """
-        is_schedule = os.environ.get("IS_SCHEDULED_TEST_JOB", "").lower() == "true"
-        if is_schedule:
-            return datetime.utcnow().strftime("%y%m%d")
+        """Get a shortened check_run_id"""
 
         check_run_id = os.environ.get("CHECK_RUN_ID", "")
         if check_run_id.isdigit():
@@ -101,9 +95,22 @@ class IQERunner:
         return os.environ | {"BONFIRE_NS_REQUESTER": self.requester}
 
     @cached_property
+    def get_build_number(self) -> str:
+        """Get a unique build identifier for Ibutsu dashboard grouping.
+
+        - If IS_SCHEDULED_TEST_JOB is True: return date in YYMMDD format (e.g., 250609)
+        - Else: fallback to CHECK_RUN_ID[:5] or '1'
+        """
+        is_schedule = os.environ.get("IS_SCHEDULED_TEST_JOB", "").lower() == "true"
+        if is_schedule:
+            return datetime.utcnow().strftime("%y%m%d")
+
+        return self.check_run_id
+
+    @cached_property
     def iqe_env_vars_arg(self) -> t.Iterable[str]:
         job_name = f"JOB_NAME={self.job_name}"
-        build_number = f"BUILD_NUMBER={self.check_run_id}"
+        build_number = f"BUILD_NUMBER={self.build_number}"
         build_url = f"BUILD_URL={self.build_url}"
         iqe_parallel_enabled = "IQE_PARALLEL_ENABLED=false"
         schema_suffix = self.schema_suffix
