@@ -139,7 +139,8 @@ def main() -> None:
     components = os.environ.get("COMPONENTS", "").split()
     components_arg = chain.from_iterable(("--component", component) for component in components)
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
-    components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
+    components_with_resources_arg = chain.from_iterable(
+        ("--no-remove-resources", component) for component in components_with_resources)
     snapshot_components = {component.name for component in snapshot.components}
     deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
     deploy_timeout = get_timeout("DEPLOY_TIMEOUT", labels)
@@ -147,11 +148,17 @@ def main() -> None:
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
 
+    # If the 'run-jenkins-tests' label is present, skip Konflux tests and run Jenkins tests instead.
+    if "run-jenkins-tests" in labels:
+        display("PR labeled to run Jenkins tests instead of Konflux")
+        return
+
     if "ok-to-skip-smokes" in labels:
         display("PR labeled to skip smoke tests")
         return
 
-    if "koku" in snapshot_components and "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
+    if "koku" in snapshot_components and "smokes-required" in labels and not any(
+            label.endswith("smoke-tests") for label in labels):
         sys.exit("Missing smoke tests labels.")
 
     for secret in ["koku-aws", "koku-gcp"]:
