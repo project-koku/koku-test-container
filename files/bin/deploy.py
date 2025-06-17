@@ -129,7 +129,7 @@ def main() -> None:
 
     owner, repo = snapshot.components[0].source.git.url.path.split("/")[1:]
     pr_number = os.environ.get("PR_NUMBER", "")
-    labels = get_pr_labels(pr_number, owner=owner, repo=repo)
+    labels = get_pr_labels(pr_number, owner=owner, repo=repo) if pr_number else []
     app_name = os.environ.get("APP_NAME")
     components = os.environ.get("COMPONENTS", "").split()
     components_arg = chain.from_iterable(("--component", component) for component in components)
@@ -141,24 +141,19 @@ def main() -> None:
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
+
     if pr_number:
+        if "run-jenkins-tests" in labels:
+            display("PR labeled to run Jenkins tests instead of Konflux")
+            return
+
         if "ok-to-skip-smokes" in labels:
             display("PR labeled to skip smoke tests")
             return
 
-        if "koku" in snapshot_components:
-            if "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
-                sys.exit("Missing smoke tests labels.")
+        if "koku" in snapshot_components and "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
+            sys.exit("Missing smoke tests labels.")
 
-            # Skip Konflux tests unless explicitly labeled.
-            # This prevents tests from running in both Jenkins and Konflux and can be
-            # removed when Konflux increases the integration test timeout and
-            # Jenkins tests are disabled.
-            #
-            # https://issues.redhat.com/browse/KONFLUX-5449
-            if "run-konflux-tests" not in labels:
-                display("PR is not labeled to run tests in Konflux")
-                return
     else:
         display("[INFO] No PR number found. Assuming nightly/manual test run.")
         display("[INFO] Proceeding with full smoke tests...")
