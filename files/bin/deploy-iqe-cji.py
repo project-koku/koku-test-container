@@ -228,22 +228,17 @@ class IQERunner:
         print(f"\nAll jobs succeeded: {job_map}", flush=True)
 
     def run(self) -> None:
-        # Skip Konflux tests unless explicitly labeled.
-        # This prevents tests from running in both Jenkins and Konflux and can be
-        # removed when Konflux increases the integration test timeout and
-        # Jenkins tests are disabled.
-        #
-        # https://issues.redhat.com/browse/KONFLUX-5449
         if self.pr_labels:
+            if "run-jenkins-tests" in self.pr_labels:
+                display("PR labeled to run Jenkins tests instead of Konflux")
+                return
+
             if "ok-to-skip-smokes" in self.pr_labels:
                 display("PR labeled to skip smoke tests")
                 return
 
-            if "run-konflux-tests" not in self.pr_labels:
-                display("PR is not labeled to run tests in Konflux")
-                return
-
-            if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
+            if "smokes-required" in self.pr_labels and not any(
+                    label.endswith("smoke-tests") for label in self.pr_labels):
                 sys.exit("Missing smoke tests labels.")
         else:
             # Labels are empty (nightly/manual snapshot scenario)
