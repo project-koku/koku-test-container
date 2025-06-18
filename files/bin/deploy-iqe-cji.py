@@ -237,8 +237,7 @@ class IQERunner:
                 display("PR labeled to skip smoke tests")
                 return
 
-            if "smokes-required" in self.pr_labels and not any(
-                    label.endswith("smoke-tests") for label in self.pr_labels):
+            if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
                 sys.exit("Missing smoke tests labels.")
         else:
             # Labels are empty (nightly/manual snapshot scenario)
