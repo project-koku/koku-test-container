@@ -228,21 +228,15 @@ class IQERunner:
         print(f"\nAll jobs succeeded: {job_map}", flush=True)
 
     def run(self) -> None:
-        if self.pr_labels:
-            if "run-jenkins-tests" in self.pr_labels:
-                display("PR labeled to run Jenkins tests instead of Konflux")
-                return
-
-            if "ok-to-skip-smokes" in self.pr_labels:
-                display("PR labeled to skip smoke tests")
-                return
-
-            if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
-                sys.exit("Missing smoke tests labels.")
-        else:
-            # Labels are empty (nightly/manual snapshot scenario)
+        if not self.pr_labels:
             display("[INFO] No PR labels found. Assuming this is a scheduled or manual test run.")
             display("[INFO] Proceeding with full smoke tests...")
+
+        if "ok-to-skip-smokes" in self.pr_labels:
+            display("[INFO] PR labeled with 'ok-to-skip-smokes'. Skipping smoke tests.")
+            return
+
+        display("[INFO] Starting deploy. Label validation was already handled by Tekton.")
 
         self.run_pod()
 
