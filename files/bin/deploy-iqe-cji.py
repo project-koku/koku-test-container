@@ -232,6 +232,10 @@ class IQERunner:
             display("[INFO] No PR labels found. Assuming this is a scheduled or manual test run.")
             display("[INFO] Proceeding with full smoke tests...")
 
+        if "ok-to-skip-smokes" in self.pr_labels:
+            display("[INFO] PR labeled with 'ok-to-skip-smokes'. Skipping smoke tests.")
+            return
+
         display("[INFO] Starting deploy. Label validation was already handled by Tekton.")
 
         self.run_pod()
