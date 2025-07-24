@@ -141,11 +141,13 @@ def main() -> None:
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
 
-    if not pr_number:
+    if pr_number:
+        if "ok-to-skip-smokes" in labels:
+            display("[INFO] PR labeled with 'ok-to-skip-smokes'. Skipping deploy.")
+            return
+    else:
         display("[INFO] No PR number found. Assuming this is a scheduled or manual test run.")
         display("[INFO] Proceeding with full smoke tests...")
-
-    display("[INFO] Starting deploy. Label validation was already handled by Tekton.")
 
     for secret in ["koku-aws", "koku-gcp"]:
         cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"
