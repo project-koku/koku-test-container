@@ -135,7 +135,6 @@ def main() -> None:
     components_arg = chain.from_iterable(("--component", component) for component in components)
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
-    snapshot_components = {component.name for component in snapshot.components}
     deploy_frontends = os.environ.get("DEPLOY_FRONTENDS") or "false"
     deploy_timeout = get_timeout("DEPLOY_TIMEOUT", labels)
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
