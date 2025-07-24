@@ -142,21 +142,11 @@ def main() -> None:
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
 
-    if pr_number:
-        if "run-jenkins-tests" in labels:
-            display("PR labeled to run Jenkins tests instead of Konflux")
-            return
-
-        if "ok-to-skip-smokes" in labels:
-            display("PR labeled to skip smoke tests")
-            return
-
-        if "koku" in snapshot_components and "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
-            sys.exit("Missing smoke tests labels.")
-
-    else:
-        display("[INFO] No PR number found. Assuming nightly/manual test run.")
+    if not pr_number:
+        display("[INFO] No PR number found. Assuming this is a scheduled or manual test run.")
         display("[INFO] Proceeding with full smoke tests...")
+
+    display("[INFO] Starting deploy. Label validation was already handled by Tekton.")
 
     for secret in ["koku-aws", "koku-gcp"]:
         cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"
