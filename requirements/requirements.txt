@@ -12,7 +12,7 @@ chardet==5.2.0
 charset-normalizer==3.4.3
 click==8.2.1
 colorama==0.4.4
-crc-bonfire==6.4.6
+crc-bonfire==6.5.0
 docutils==0.16
 durationpy==0.10
 fuzzy-date==0.5.6
