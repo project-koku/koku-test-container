@@ -114,7 +114,8 @@ class IQERunner:
         build_url = f"BUILD_URL={self.build_url}"
         iqe_parallel_enabled = "IQE_PARALLEL_ENABLED=false"
         schema_suffix = self.schema_suffix
-        env_var_params = [job_name, build_number, build_url, iqe_parallel_enabled, schema_suffix]
+        local_conf_path = "IQE_TESTS_LOCAL_CONF_PATH=/iqe_venv/lib/python3.12/site-packages/iqe_cost_management/conf_ephemeral_daily_job"
+        env_var_params = [job_name, build_number, build_url, iqe_parallel_enabled, schema_suffix, local_conf_path]
         return chain.from_iterable(("--env-var", var) for var in env_var_params)
 
     @cached_property
