@@ -134,17 +134,17 @@ class IQERunner:
 
         iqe_filter_expression = ""
         if "aws-smoke-tests" in self.pr_labels:
-            iqe_filter_expression = "test_api_aws or test_api_ocp_on_aws or test_api_cost_model_aws or test_api_cost_model_ocp_on_aws"
+            iqe_filter_expression = "test_api_aws or test_api_ocp_on_aws or test_api_ocp_for_aws or test_api_cost_model_aws or test_api_cost_model_ocp_on_aws"
         elif "azure-smoke-tests" in self.pr_labels:
-            iqe_filter_expression = "test_api_azure or test_api_ocp_on_azure or test_api_cost_model_azure or test_api_cost_model_ocp_on_azure"
+            iqe_filter_expression = (
+                "test_api_azure or test_api_ocp_on_azure or test_api_ocp_for_azure or test_api_cost_model_azure or test_api_cost_model_ocp_on_azure"
+            )
         elif "gcp-smoke-tests" in self.pr_labels:
-            iqe_filter_expression = "test_api_gcp or test_api_ocp_on_gcp or test_api_cost_model_gcp or test_api_cost_model_ocp_on_gcp"
-        elif "oci-smoke-tests" in self.pr_labels:
-            iqe_filter_expression = "test_api_oci or test_api_cost_model_oci"
+            iqe_filter_expression = "test_api_gcp or test_api_ocp_on_gcp or test_api_ocp_for_gcp or test_api_cost_model_gcp or test_api_cost_model_ocp_on_gcp"
         elif "ocp-smoke-tests" in self.pr_labels:
             iqe_filter_expression = (
                 "(test_api_ocp or test_api_cost_model_ocp or aws_ingest_single or aws_ingest_multi) "
-                "and not ocp_on_gcp and not ocp_on_azure and not ocp_on_cloud"
+                "and not ocp_on_gcp and not ocp_on_azure and not ocp_on_cloud and not ocp_for_gcp and not ocp_for_azure"
             )
         elif "cost-model-smoke-tests" in self.pr_labels:
             iqe_filter_expression = "test_api_cost_model or ocp_source_raw"
