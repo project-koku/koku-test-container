@@ -158,9 +158,9 @@ class IQERunner:
         if iqe_marker_expression := os.environ.get("IQE_MARKER_EXPRESSION", ""):
             return iqe_marker_expression
 
-        iqe_marker_expression = "cost_smoke"
+        iqe_marker_expression = "smoke"
         if "ocp-smoke-tests" in self.pr_labels:
-            iqe_marker_expression = "cost_smoke and not cost_exclude_ocp_smokes"
+            iqe_marker_expression = "smoke and not cost_exclude_ocp_smokes"
         elif "hot-fix-smoke-tests" in self.pr_labels:
             iqe_marker_expression = "cost_hotfix"
         elif "smoke-tests" in self.pr_labels:
