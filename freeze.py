@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Freeze container requirements for use with a final container build."""
 
 from __future__ import annotations

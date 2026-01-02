@@ -5,7 +5,7 @@ main() {
     local aws_access_key_id="${AWS_ACCESS_KEY_ID:?AWS_ACCESS_KEY_ID env var was not defined}"
     local aws_secret_access_key="${AWS_SECRET_ACCESS_KEY:?AWS_SECRET_ACCESS_KEY env var was not defined}"
     local artifacts_key="${ARTIFACTS_KEY:?ARTIFACTS_KEY env var was not defined}"
-    local aws_default_region="${AWS_DEFAULT_REGION:-us-east-1}"
+    local aws_default_region="${AWS_DEFAULT_REGION:-us-west-2}"
     local bucket="${BUCKET:-hccm-konflux-artifacts}"
 
 
