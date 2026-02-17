@@ -31,9 +31,31 @@ def get_check_run_identifier() -> str:
     return "1"
 
 
-def get_component_options(components: list[Component], pr_number: str | None = None) -> list[str]:
+def get_batch_size_from_label(labels: set[str] | None) -> str | None:
+    """Search labels for 'adjust-batch-size=VALUE' and return VALUE if valid."""
+    if not labels:
+        return None
+
+    for label in labels:
+        if label.startswith("adjust-batch-size="):
+            try:
+                parts = label.split("=")
+                if len(parts) == 2 and parts[1].isdigit():
+                    batch_size = parts[1]
+                    print(f"[INFO] Detected dynamic batch size: {batch_size}")
+                    return batch_size
+
+                print(f"[WARNING] Label '{label}' format is invalid. Expected 'adjust-batch-size=VALUE'.")
+            except (IndexError, ValueError) as exc:
+                print(f"[ERROR] Failed to parse batch size from label '{label}': {exc}")
+            break
+    return None
+
+
+def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
     prefix = f"pr-{pr_number}-" if pr_number else ""
     check_run_id = get_check_run_identifier()
+    batch_size_value = get_batch_size_from_label(labels)
     result = []
 
     for component in components:
@@ -61,6 +83,13 @@ def get_component_options(components: list[Component], pr_number: str | None = N
                 "--set-parameter",
                 f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{check_run_id}",
             ))
+
+            # Adjust PARQUET_PROCESSING_BATCH_SIZE via adjust-batch-size GITHUB label
+            if batch_size_value:
+                result.extend((
+                    "--set-parameter",
+                    f"{component_name}/PARQUET_PROCESSING_BATCH_SIZE={batch_size_value}",
+                ))
     return result
 
 
@@ -182,7 +211,7 @@ def main() -> None:
         *components_arg,
         *components_with_resources_arg,
         *extra_deploy_args.split(),
-        *get_component_options(snapshot.components, pr_number),
+        *get_component_options(snapshot.components, pr_number, labels),
     ]  # fmt: off
 
     display(command)
