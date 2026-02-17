@@ -38,17 +38,14 @@ def get_batch_size_from_label(labels: set[str] | None) -> str | None:
 
     for label in labels:
         if label.startswith("adjust-batch-size="):
-            try:
-                parts = label.split("=")
-                if len(parts) == 2 and parts[1].isdigit():
-                    batch_size = parts[1]
-                    print(f"[INFO] Detected dynamic batch size: {batch_size}")
-                    return batch_size
+            parts = label.split("=")
+            if len(parts) == 2 and parts[1].isdigit():
+                batch_size = parts[1]
+                print(f"[INFO] Detected dynamic batch size: {batch_size}")
+                return batch_size
 
-                print(f"[WARNING] Label '{label}' format is invalid. Expected 'adjust-batch-size=VALUE'.")
-            except (IndexError, ValueError) as exc:
-                print(f"[ERROR] Failed to parse batch size from label '{label}': {exc}")
-            break
+            print(f"[WARNING] Label '{label}' format is invalid. Expected 'adjust-batch-size=VALUE'.")
+
     return None
 
 
