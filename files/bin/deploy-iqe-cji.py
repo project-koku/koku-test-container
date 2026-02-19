@@ -166,6 +166,10 @@ class IQERunner:
         elif "smoke-tests" in self.pr_labels:
             iqe_marker_expression = "cost_required"
 
+        # Toggle test data generation to use multiple files per manifest
+        if "multi-file-ingest" in self.pr_labels:
+            iqe_marker_expression = f"{iqe_marker_expression} or cost_multi_file"
+
         return iqe_marker_expression
 
     @cached_property
