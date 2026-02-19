@@ -89,6 +89,12 @@ def get_timeout(env_var: str, labels: set[str] | None = None) -> int:
     return int(timeout)
 
 
+# Default upstream repo for PR API lookups (PR numbers are relative to the target repo).
+# Used when the snapshot points to a fork and the API returns 404 for the fork.
+_PR_API_FALLBACK_OWNER = "project-koku"
+_PR_API_FALLBACK_REPO = "koku"
+
+
 def get_pr_labels(
     pr_number: str,
     owner: str = "project-koku",
@@ -102,6 +108,8 @@ def get_pr_labels(
         with urllib.request.urlopen(url) as response:
             data = json.loads(response.read())
     except HTTPError as exc:
+        if exc.code == 404 and (owner != _PR_API_FALLBACK_OWNER or repo != _PR_API_FALLBACK_REPO):
+            return get_pr_labels(pr_number, owner=_PR_API_FALLBACK_OWNER, repo=_PR_API_FALLBACK_REPO)
         sys.exit(f"Error {exc.code} retrieving {exc.url}.")
 
     return {item["name"] for item in data["labels"]}
