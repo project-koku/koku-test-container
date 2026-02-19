@@ -108,7 +108,7 @@ def get_pr_labels(
         with urllib.request.urlopen(url) as response:
             data = json.loads(response.read())
     except HTTPError as exc:
-        if exc.code == 404 and (owner != _PR_API_FALLBACK_OWNER or repo != _PR_API_FALLBACK_REPO):
+        if exc.code == 404 and (owner, repo) != (_PR_API_FALLBACK_OWNER, _PR_API_FALLBACK_REPO):
             return get_pr_labels(pr_number, owner=_PR_API_FALLBACK_OWNER, repo=_PR_API_FALLBACK_REPO)
         sys.exit(f"Error {exc.code} retrieving {exc.url}.")
 
