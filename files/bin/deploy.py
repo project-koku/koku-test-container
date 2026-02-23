@@ -49,10 +49,19 @@ def get_batch_size_from_label(labels: set[str] | None) -> str | None:
     return None
 
 
+def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
+    """Search labels for 'ocp-on-prem-smoke-tests' and return True if valid/False otherwise"""
+    if not labels:
+        return False
+
+    return "ocp-on-prem-smoke-tests" in labels
+
+
 def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
     prefix = f"pr-{pr_number}-" if pr_number else ""
     check_run_id = get_check_run_identifier()
     batch_size_value = get_batch_size_from_label(labels)
+    on_prem_toggle = get_on_prem_toggle_from_label(labels)
     result = []
 
     for component in components:
@@ -86,6 +95,12 @@ def get_component_options(components: list[Component], pr_number: str | None = N
                 result.extend((
                     "--set-parameter",
                     f"{component_name}/PARQUET_PROCESSING_BATCH_SIZE={batch_size_value}",
+                ))
+            # Adjust ONPREM toggle via ocp-on-prem-smoke-tests GITHUB label
+            if on_prem_toggle:
+                result.extend((
+                    "--set-parameter",
+                    f"{component_name}/ONPREM=True",
                 ))
     return result
 

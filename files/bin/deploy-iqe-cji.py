@@ -165,6 +165,8 @@ class IQERunner:
             iqe_marker_expression = "cost_hotfix"
         elif "smoke-tests" in self.pr_labels:
             iqe_marker_expression = "cost_required"
+        elif "ocp-on-prem-smoke-tests" in self.pr_labels:
+            iqe_marker_expression = "cost_ocp_on_prem"
 
         # Toggle test data generation to use multiple files per manifest
         if "multi-file-ingest" in self.pr_labels:
