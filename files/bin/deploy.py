@@ -50,7 +50,7 @@ def get_batch_size_from_label(labels: set[str] | None) -> str | None:
 
 
 def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
-    """Search labels for 'adjust-batch-size=VALUE' and return VALUE if valid."""
+    """Search labels for 'ocp-on-prem-smoke-tests' and return True if valid/False otherwise"""
     if not labels:
         return False
 
