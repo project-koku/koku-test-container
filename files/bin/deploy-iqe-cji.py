@@ -13,6 +13,7 @@ from itertools import chain
 import sh
 
 from deploy import display
+from deploy import get_batch_size_from_label
 from deploy import get_pr_labels
 from deploy import get_timeout
 from models import Snapshot
@@ -116,6 +117,7 @@ class IQERunner:
         schema_suffix = self.schema_suffix
         ibutsu_mode = "IBUTSU_MODE=archive"
         ibutsu_project = "IBUTSU_PROJECT=insights-qe"
+
         env_var_params = [
             job_name,
             build_number,
@@ -125,6 +127,11 @@ class IQERunner:
             ibutsu_mode,
             ibutsu_project,
         ]
+
+        # Set env var to Indicate that PARQUET_PROCESSING_BATCH_SIZE was adjusted
+        if get_batch_size_from_label(self.pr_labels):
+            env_var_params.append("ADJUST_BATCH_SIZE=True")
+
         return chain.from_iterable(("--env-var", var) for var in env_var_params)
 
     @cached_property
