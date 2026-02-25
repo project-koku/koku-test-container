@@ -58,16 +58,20 @@ def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
-    prefix = f"pr-{pr_number}-" if pr_number else ""
+    """Build bonfire options for each component in the snapshot."""
+    built_component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or ""
     check_run_id = get_check_run_identifier()
     batch_size_value = get_batch_size_from_label(labels)
     on_prem_toggle = get_on_prem_toggle_from_label(labels)
     result = []
 
     for component in components:
-        component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or component.name
+        component_name = built_component_name or component.name
         revision = component.source.git.revision[:7]
         image = component.container_image.image
+        # Only the component built in this run has pr- prefixed image tags.
+        use_pr_prefix = bool(pr_number and (not built_component_name or component.name == built_component_name))
+        prefix = f"pr-{pr_number}-" if use_pr_prefix else ""
 
         result.extend((
             "--set-template-ref",
