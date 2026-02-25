@@ -70,7 +70,7 @@ def get_component_options(components: list[Component], pr_number: str | None = N
         revision = component.source.git.revision[:7]
         image = component.container_image.image
         # Only the component built in this run has pr- prefixed image tags.
-        use_pr_prefix = bool(pr_number and (not built_component_name or component.name == built_component_name))
+        use_pr_prefix = pr_number and (not built_component_name or component.name == built_component_name)
         prefix = f"pr-{pr_number}-" if use_pr_prefix else ""
 
         result.extend((
