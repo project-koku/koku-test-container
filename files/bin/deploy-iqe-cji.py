@@ -128,7 +128,7 @@ class IQERunner:
             ibutsu_project,
         ]
 
-        # Set env var to Indicate that PARQUET_PROCESSING_BATCH_SIZE was adjusted
+        # Signal to IQE that a custom batch size is being used.
         if get_batch_size_from_label(self.pr_labels):
             env_var_params.append("ADJUST_BATCH_SIZE=True")
 
