@@ -50,11 +50,12 @@ def get_batch_size_from_label(labels: set[str] | None) -> str | None:
 
 
 def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
-    """Search labels for 'ocp-on-prem-smoke-tests' and return True if valid/False otherwise"""
+    """Search labels for 'ocp-on-prem-smoke-tests' or "on-prem-processing" and return True if valid/False otherwise"""
     if not labels:
         return False
 
-    return "ocp-on-prem-smoke-tests" in labels
+    on_prem_labels = {"ocp-on-prem-smoke-tests", "on-prem-processing"}
+    return not on_prem_labels.isdisjoint(labels)
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
