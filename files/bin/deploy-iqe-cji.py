@@ -175,9 +175,9 @@ class IQERunner:
         elif "ocp-on-prem-smoke-tests" in self.pr_labels:
             iqe_marker_expression = "cost_ocp_on_prem"
 
-        # Toggle test data generation to use multiple files per manifest
-        if "multi-file-ingest" in self.pr_labels:
-            iqe_marker_expression = f"{iqe_marker_expression} or cost_multi_file"
+        # Toggle test data generation to force CSV file splitting
+        if "force-csv-splitting" in self.pr_labels:
+            iqe_marker_expression = f"{iqe_marker_expression} or cost_force_csv_splitting"
 
         return iqe_marker_expression
 
