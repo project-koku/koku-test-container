@@ -54,7 +54,9 @@ def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
     if not labels:
         return False
 
-    return "ocp-on-prem-smoke-tests" in labels
+    use_on_prem_processing = "ocp-on-prem-smoke-tests" in labels or "on-prem-processing" in labels
+
+    return use_on_prem_processing
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
