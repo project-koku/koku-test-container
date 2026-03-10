@@ -183,7 +183,8 @@ def main() -> None:
 
     owner, repo = snapshot.components[0].source.git.url.path.split("/")[1:]
     pr_number = os.environ.get("PR_NUMBER", "")
-    if os.environ.get("EVENT_TYPE", "") == "push":
+    event_type = os.environ.get("EVENT_TYPE", "")
+    if not event_type or event_type == "push":
         pr_number = ""
     labels = get_pr_labels(pr_number, owner=owner, repo=repo) if pr_number else []
     app_name = os.environ.get("APP_NAME")
