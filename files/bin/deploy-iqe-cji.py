@@ -302,7 +302,7 @@ def main() -> None:
     namespace = args.namespace
     requester = args.requester
     pr_number = os.environ.get("PR_NUMBER", "")
-    if os.environ.get("EVENT_TYPE", "") != "pull_request":
+    if os.environ.get("EVENT_TYPE", "") == "push":
         pr_number = ""
 
     runner = IQERunner(namespace=namespace, requester=requester, check=args.check, pr_number=pr_number)
