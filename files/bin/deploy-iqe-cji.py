@@ -179,6 +179,8 @@ class IQERunner:
         if "force-csv-splitting" in self.pr_labels:
             iqe_marker_expression = f"{iqe_marker_expression} or cost_force_csv_splitting"
         if "on-prem-processing" in self.pr_labels:
+            # added to prevent adding gcp/azure sources without support
+            # remove the exclusion after we have full cloud support in onprem deployments
             iqe_marker_expression = f"{iqe_marker_expression} and not cost_exclude_ocp_smokes"
 
         return iqe_marker_expression
