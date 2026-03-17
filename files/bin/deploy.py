@@ -54,8 +54,8 @@ def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
     if not labels:
         return False
 
-    on_prem_labels = {"ocp-on-prem-smoke-tests", "on-prem-processing"}
-    return not on_prem_labels.isdisjoint(labels)
+    on_prem_processing_label = "on-prem-processing"
+    return on_prem_processing_label in labels
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
