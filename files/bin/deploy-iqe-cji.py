@@ -173,7 +173,7 @@ class IQERunner:
         elif "smoke-tests" in self.pr_labels:
             iqe_marker_expression = "cost_required"
         elif "ocp-on-prem-smoke-tests" in self.pr_labels:
-            iqe_marker_expression = "cost_ocp_on_prem"
+            iqe_marker_expression = "cost_ocp_on_prem and not cost_exclude_ocp_smokes"
 
         # Toggle test data generation to force CSV file splitting
         if "force-csv-splitting" in self.pr_labels:
