@@ -306,8 +306,10 @@ def main() -> None:
     requester = args.requester
     pr_number = os.environ.get("PR_NUMBER", "")
     event_type = os.environ.get("EVENT_TYPE", "")
-    if not event_type or event_type == "push":
+    if event_type == "push":
         pr_number = ""
+    elif not event_type and pr_number:
+        display("[INFO] EVENT_TYPE missing, but PR_NUMBER is set; treating run as PR context.")
 
     runner = IQERunner(namespace=namespace, requester=requester, check=args.check, pr_number=pr_number)
     runner.run()
