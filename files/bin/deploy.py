@@ -161,6 +161,30 @@ def get_pr_labels(
     return {item["name"] for item in data["labels"]}
 
 
+def _should_deploy(pr_number: str, labels: set[str] | list, snapshot_components: set[str]) -> bool:
+    """Check PR labels to determine whether the deploy should proceed."""
+    if pr_number:
+        if "run-jenkins-tests" in labels:
+            display("PR labeled to run Jenkins tests instead of Konflux")
+            return False
+
+        if "ok-to-skip-smokes" in labels:
+            display("PR labeled to skip smoke tests")
+            return False
+
+        if "koku" in snapshot_components and "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
+            sys.exit("Missing smoke tests labels.")
+
+        if not labels:
+            sys.exit(f"[ERROR] No labels found on PR #{pr_number}. Add a smoke test label (e.g., smoke-tests, ok-to-skip-smokes) to proceed.")
+
+    else:
+        display("[INFO] No PR number found. Assuming nightly/manual test run.")
+        display("[INFO] Proceeding with full smoke tests...")
+
+    return True
+
+
 def display(command: str | Sequence[Any]) -> None:
     if isinstance(command, str):
         quoted = [command]
@@ -201,21 +225,8 @@ def main() -> None:
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
 
-    if pr_number:
-        if "run-jenkins-tests" in labels:
-            display("PR labeled to run Jenkins tests instead of Konflux")
-            return
-
-        if "ok-to-skip-smokes" in labels:
-            display("PR labeled to skip smoke tests")
-            return
-
-        if "koku" in snapshot_components and "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
-            sys.exit("Missing smoke tests labels.")
-
-    else:
-        display("[INFO] No PR number found. Assuming nightly/manual test run.")
-        display("[INFO] Proceeding with full smoke tests...")
+    if not _should_deploy(pr_number, labels, snapshot_components):
+        return
 
     for secret in ["koku-aws", "koku-gcp"]:
         cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"

@@ -265,8 +265,9 @@ class IQERunner:
 
             if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
                 sys.exit("Missing smoke tests labels.")
+        elif self.pr_number:
+            sys.exit(f"[ERROR] No labels found on PR #{self.pr_number}. Add a smoke test label (e.g., smoke-tests, ok-to-skip-smokes) to proceed.")
         else:
-            # Labels are empty (nightly/manual snapshot scenario)
             display("[INFO] No PR labels found. Assuming this is a scheduled or manual test run.")
             display("[INFO] Proceeding with full smoke tests...")
 
