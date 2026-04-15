@@ -178,9 +178,11 @@ class IQERunner:
         # Toggle test data generation to force CSV file splitting
         if "force-csv-splitting" in self.pr_labels:
             iqe_marker_expression = f"{iqe_marker_expression} or cost_force_csv_splitting"
-        if "on-prem-processing" in self.pr_labels and "cost_exclude_ocp_smokes" not in iqe_marker_expression:
-            # added to prevent adding gcp/azure sources without full support
-            iqe_marker_expression += " and not cost_exclude_ocp_smokes"
+        if "on-prem-processing" in self.pr_labels:
+            iqe_marker_expression += " and not cost_onprem_blocked"
+            if "cost_exclude_ocp_smokes" not in iqe_marker_expression:
+                # added to prevent adding gcp/azure sources without full support
+                iqe_marker_expression += " and not cost_exclude_ocp_smokes"
 
         return iqe_marker_expression
 
