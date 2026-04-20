@@ -228,11 +228,6 @@ def main() -> None:
     if not _should_deploy(pr_number, labels, snapshot_components):
         return
 
-    for secret in ["koku-aws", "koku-gcp"]:
-        cmd = f"oc get secret {secret} -o yaml -n ephemeral-base | grep -v '^\s*namespace:\s' | oc apply --namespace={namespace} -f -"
-        display(cmd)
-        subprocess.run(cmd, shell=True)
-
     command = [
         "bonfire", "deploy",
         app_name,
