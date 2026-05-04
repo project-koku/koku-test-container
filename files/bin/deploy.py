@@ -50,12 +50,11 @@ def get_batch_size_from_label(labels: set[str] | None) -> str | None:
 
 
 def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
-    """Search labels for 'ocp-on-prem-smoke-tests' or "on-prem-processing" and return True if valid/False otherwise"""
+    """Search labels for 'on-prem-processing' and return True if found, False otherwise."""
     if not labels:
         return False
 
-    on_prem_processing_label = "on-prem-processing"
-    return on_prem_processing_label in labels
+    return "on-prem-processing" in labels
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
@@ -214,7 +213,10 @@ def main() -> None:
         display("[INFO] EVENT_TYPE missing, but PR_NUMBER is set; treating run as PR context.")
     labels = get_pr_labels(pr_number, owner=owner, repo=repo) if pr_number else []
     app_name = os.environ.get("APP_NAME")
-    components = os.environ.get("COMPONENTS", "").split()
+    on_prem = get_on_prem_toggle_from_label(labels)
+    components = [c for c in os.environ.get("COMPONENTS", "").split() if not (on_prem and c == "trino")]
+    if on_prem:
+        print(f"[INFO] on-prem-processing label detected: excluding 'trino' from components. Components: {components}")
     components_arg = chain.from_iterable(("--component", component) for component in components)
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
