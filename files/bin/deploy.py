@@ -216,7 +216,7 @@ def main() -> None:
     on_prem = get_on_prem_toggle_from_label(labels)
     components = [c for c in os.environ.get("COMPONENTS", "").split() if not (on_prem and c == "trino")]
     if on_prem:
-        print(f"[INFO] on-prem-processing label detected: excluding 'trino' from components. Components: {components}")
+        display(f"[INFO] on-prem-processing label detected: excluding 'trino' from components. Components: {components}")
     components_arg = chain.from_iterable(("--component", component) for component in components)
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
