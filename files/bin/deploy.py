@@ -244,8 +244,10 @@ def main() -> None:
         "--set-parameter", "sources-api/MIN_REPLICAS=1",
         "--set-parameter", "sources-api/BACKGROUND_WORKER_MIN_REPLICAS=0",
         "--set-parameter", "sources-api/AVAILABILITY_MIN_REPLICAS=0",
-        "--set-parameter", "trino/HIVE_PROPERTIES_FILE=glue.properties",
-        "--set-parameter", "trino/GLUE_PROPERTIES_FILE=hive.properties",
+        *([] if on_prem else [
+            "--set-parameter", "trino/HIVE_PROPERTIES_FILE=glue.properties",
+            "--set-parameter", "trino/GLUE_PROPERTIES_FILE=hive.properties",
+        ]),
         *components_arg,
         *components_with_resources_arg,
         *extra_deploy_args.split(),
