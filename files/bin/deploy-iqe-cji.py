@@ -274,7 +274,7 @@ class IQERunner:
         elif self.pr_number:
             display(f"[INFO] No PR labels found for PR #{self.pr_number}. Proceeding with deploy (non-koku component).")
         else:
-            display("[INFO] No PR number found. Assuming nightly/manual test run.")
+            display("[INFO] No PR number found. Assuming scheduled/manual test run.")
             display("[INFO] Proceeding with full smoke tests...")
 
         self.run_pod()
