@@ -174,7 +174,7 @@ def _should_deploy(pr_number: str, labels: set[str] | list, snapshot_components:
         if "koku" in snapshot_components and "smokes-required" in labels and not any(label.endswith("smoke-tests") for label in labels):
             sys.exit("Missing smoke tests labels.")
 
-        if not labels:
+        if not labels and "koku" in snapshot_components:
             sys.exit(f"[ERROR] No labels found on PR #{pr_number}. Add a smoke test label (e.g., smoke-tests, ok-to-skip-smokes) to proceed.")
 
     else:

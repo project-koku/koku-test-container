@@ -189,6 +189,10 @@ class IQERunner:
         return get_timeout("IQE_CJI_TIMEOUT", self.pr_labels)
 
     @cached_property
+    def snapshot_components(self) -> set[str]:
+        return {component.name for component in self.snapshot.components}
+
+    @cached_property
     def pr_labels(self) -> set[str]:
         if self.check:
             return set(os.environ.get("PR_LABELS", "").split()) or {"run-konflux-tests", "hot-fix-smoke-tests", "bug"}
@@ -265,7 +269,7 @@ class IQERunner:
 
             if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
                 sys.exit("Missing smoke tests labels.")
-        elif self.pr_number:
+        elif self.pr_number and "koku" in self.snapshot_components:
             sys.exit(f"[ERROR] No labels found on PR #{self.pr_number}. Add a smoke test label (e.g., smoke-tests, ok-to-skip-smokes) to proceed.")
         else:
             display("[INFO] No PR labels found. Assuming this is a scheduled or manual test run.")
