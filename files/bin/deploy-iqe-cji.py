@@ -267,7 +267,11 @@ class IQERunner:
                 display("PR labeled to skip smoke tests")
                 return
 
-            if "koku" in self.snapshot_components and "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
+            if (
+                "koku" in self.snapshot_components
+                and "smokes-required" in self.pr_labels
+                and not any(label.endswith("smoke-tests") for label in self.pr_labels)
+            ):
                 sys.exit("Missing smoke tests labels.")
         elif self.pr_number and "koku" in self.snapshot_components:
             sys.exit(f"[ERROR] No labels found on PR #{self.pr_number}. Add a smoke test label (e.g., smoke-tests, ok-to-skip-smokes) to proceed.")
