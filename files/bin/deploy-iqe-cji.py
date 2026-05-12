@@ -267,12 +267,14 @@ class IQERunner:
                 display("PR labeled to skip smoke tests")
                 return
 
-            if "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
+            if "koku" in self.snapshot_components and "smokes-required" in self.pr_labels and not any(label.endswith("smoke-tests") for label in self.pr_labels):
                 sys.exit("Missing smoke tests labels.")
         elif self.pr_number and "koku" in self.snapshot_components:
             sys.exit(f"[ERROR] No labels found on PR #{self.pr_number}. Add a smoke test label (e.g., smoke-tests, ok-to-skip-smokes) to proceed.")
+        elif self.pr_number:
+            display(f"[INFO] No PR labels found for PR #{self.pr_number}. Proceeding with deploy (non-koku component).")
         else:
-            display("[INFO] No PR labels found. Assuming this is a scheduled or manual test run.")
+            display("[INFO] No PR number found. Assuming nightly/manual test run.")
             display("[INFO] Proceeding with full smoke tests...")
 
         self.run_pod()
