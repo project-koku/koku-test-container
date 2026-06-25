@@ -154,7 +154,7 @@ class IQERunner:
                 "and not ocp_on_gcp and not ocp_on_azure and not ocp_on_cloud and not ocp_for_gcp and not ocp_for_azure"
             )
         elif "cost-model-smoke-tests" in self.pr_labels:
-            iqe_filter_expression = "test_api_cost_model or ocp_source_raw"
+            iqe_filter_expression = "test_api_cost_model or ocp_source_raw or test_api_price_list"
         elif any(item in self.pr_labels for item in ("hot-fix-smoke-tests", "full-run-smoke-tests", "smoke-tests")):
             iqe_filter_expression = "test_api"
 
