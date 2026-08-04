@@ -15,6 +15,7 @@ import sh
 from deploy import display
 from deploy import get_batch_size_from_label
 from deploy import get_pr_labels
+from deploy import get_schema_run_identifier
 from deploy import get_timeout
 from models import Snapshot
 from pydantic import ValidationError
@@ -76,10 +77,12 @@ class IQERunner:
 
     @cached_property
     def schema_suffix(self) -> str:
+        # Must match deploy.py's koku/SCHEMA_SUFFIX so the app and IQE share a schema.
+        # Use per-PipelineRun id (not check_run_id) so STONEINTG-1732 duplicates do not collide.
         # assume the component we care about is first!
         revision = self.snapshot.components[0].source.git.revision[:7]
         prefix = f"pr-{self.pr_number}-" if self.pr_number else ""
-        return f"SCHEMA_SUFFIX=_{prefix}{revision}_{self.check_run_id}"
+        return f"SCHEMA_SUFFIX=_{prefix}{revision}_{get_schema_run_identifier()}"
 
     @cached_property
     def build_url(self) -> str:
