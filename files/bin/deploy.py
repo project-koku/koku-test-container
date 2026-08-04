@@ -31,6 +31,26 @@ def get_check_run_identifier() -> str:
     return "1"
 
 
+def get_schema_run_identifier() -> str:
+    """Return a per-PipelineRun id for SCHEMA_SUFFIX uniqueness.
+
+    Prefer the Tekton-generated suffix of PIPELINE_RUN_NAME (e.g. ``vjftk`` from
+    ``koku-ci-vjftk``) so concurrent duplicate integration PipelineRuns for the
+    same Snapshot (STONEINTG-1732) do not share a Postgres schema.
+
+    Falls back to CHECK_RUN_ID[:5] (or ``1``) when PIPELINE_RUN_NAME is unset or
+    does not look like a generateName result.
+    """
+    pipeline_run_name = os.environ.get("PIPELINE_RUN_NAME", "").strip()
+    if pipeline_run_name and "-" in pipeline_run_name:
+        # generateName yields "<scenario>-<random>"; use the random segment.
+        suffix = pipeline_run_name.rsplit("-", 1)[-1]
+        if suffix.isalnum():
+            return suffix
+
+    return get_check_run_identifier()
+
+
 def get_batch_size_from_label(labels: set[str] | None) -> str | None:
     """Search labels for 'adjust-batch-size=VALUE' and return VALUE if valid."""
     if not labels:
@@ -60,7 +80,7 @@ def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
 def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
     """Build bonfire options for each component in the snapshot."""
     built_component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or ""
-    check_run_id = get_check_run_identifier()
+    schema_run_id = get_schema_run_identifier()
     batch_size_value = get_batch_size_from_label(labels)
     on_prem_toggle = get_on_prem_toggle_from_label(labels)
     result = []
@@ -91,7 +111,7 @@ def get_component_options(components: list[Component], pr_number: str | None = N
         if component_name == "koku":
             result.extend((
                 "--set-parameter",
-                f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{check_run_id}",
+                f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{schema_run_id}",
             ))
 
             # Adjust PARQUET_PROCESSING_BATCH_SIZE via adjust-batch-size GITHUB label
