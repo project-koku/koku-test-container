@@ -106,8 +106,7 @@ def get_component_options(components: list[Component], pr_number: str | None = N
             f"{component_name}/DBM_IMAGE_TAG={prefix}{revision}",
             "--set-parameter",
             f"{component_name}/DBM_INVOCATION={secrets.randbelow(100)}",
-            "--set-parameter"
-            f"{component_name}/IQE_TEST_RUN=True",
+            f"--set-parameter{component_name}/IQE_TEST_RUN=True",
         ))
 
         if component_name == "koku":
