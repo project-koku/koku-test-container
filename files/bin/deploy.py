@@ -106,13 +106,14 @@ def get_component_options(components: list[Component], pr_number: str | None = N
             f"{component_name}/DBM_IMAGE_TAG={prefix}{revision}",
             "--set-parameter",
             f"{component_name}/DBM_INVOCATION={secrets.randbelow(100)}",
-            f"--set-parameter{component_name}/IQE_TEST_RUN=True",
         ))
 
         if component_name == "koku":
             result.extend((
                 "--set-parameter",
                 f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{schema_run_id}",
+                "--set-parameter",
+                f"{component_name}/IQE_TEST_RUN=True",
             ))
 
             # Adjust PARQUET_PROCESSING_BATCH_SIZE via adjust-batch-size GITHUB label
