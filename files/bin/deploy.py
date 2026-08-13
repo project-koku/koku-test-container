@@ -112,6 +112,8 @@ def get_component_options(components: list[Component], pr_number: str | None = N
             result.extend((
                 "--set-parameter",
                 f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{schema_run_id}",
+                "--set-parameter",
+                f"{component_name}/IQE_TEST_RUN=True",
             ))
 
             # Adjust PARQUET_PROCESSING_BATCH_SIZE via adjust-batch-size GITHUB label
