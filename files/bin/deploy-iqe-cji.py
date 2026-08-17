@@ -118,7 +118,7 @@ class IQERunner:
         build_url = f"BUILD_URL={self.build_url}"
         iqe_parallel_enabled = "IQE_PARALLEL_ENABLED=false"
         schema_suffix = self.schema_suffix
-        ibutsu_mode = "IBUTSU_MODE=archive"
+        ibutsu_mode = "IBUTSU_MODE=s3"
         ibutsu_project = "IBUTSU_PROJECT=insights-qe"
 
         env_var_params = [
