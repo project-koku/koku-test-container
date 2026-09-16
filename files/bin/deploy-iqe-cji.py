@@ -136,7 +136,8 @@ class IQERunner:
         if get_batch_size_from_label(self.pr_labels):
             env_var_params.append("ADJUST_BATCH_SIZE=True")
 
-        if get_on_prem_toggle_from_label(self.pr_labels):
+        is_scheduled_onprem = os.environ.get("IS_SCHEDULED_TEST_JOB", "").lower() == "true" and "cost_ocp_on_prem" in self.iqe_marker_expression
+        if get_on_prem_toggle_from_label(self.pr_labels) or is_scheduled_onprem:
             env_var_params.append("ONPREM=True")
 
         return chain.from_iterable(("--env-var", var) for var in env_var_params)
