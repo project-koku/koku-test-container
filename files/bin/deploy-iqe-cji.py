@@ -14,6 +14,7 @@ import sh
 
 from deploy import display
 from deploy import get_batch_size_from_label
+from deploy import get_on_prem_toggle_from_label
 from deploy import get_pr_labels
 from deploy import get_schema_run_identifier
 from deploy import get_timeout
@@ -134,6 +135,10 @@ class IQERunner:
         # Signal to IQE that a custom batch size is being used.
         if get_batch_size_from_label(self.pr_labels):
             env_var_params.append("ADJUST_BATCH_SIZE=True")
+
+        is_scheduled_onprem = os.environ.get("IS_SCHEDULED_TEST_JOB", "").lower() == "true" and "cost_ocp_on_prem" in self.iqe_marker_expression
+        if get_on_prem_toggle_from_label(self.pr_labels) or is_scheduled_onprem:
+            env_var_params.append("ONPREM=True")
 
         return chain.from_iterable(("--env-var", var) for var in env_var_params)
 
