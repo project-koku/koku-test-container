@@ -69,12 +69,15 @@ def get_batch_size_from_label(labels: set[str] | None) -> str | None:
     return None
 
 
+_ON_PREM_PR_LABELS = frozenset({"on-prem-processing", "ocp-on-prem-smoke-tests"})
+
+
 def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
-    """Search labels for 'on-prem-processing' and return True if found, False otherwise."""
+    """Return True when PR labels request on-prem deploy and IQE configuration."""
     if not labels:
         return False
 
-    return "on-prem-processing" in labels
+    return bool(labels & _ON_PREM_PR_LABELS)
 
 
 def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
@@ -238,7 +241,7 @@ def main() -> None:
     on_prem = get_on_prem_toggle_from_label(labels)
     components = [c for c in os.environ.get("COMPONENTS", "").split() if not (on_prem and c == "trino")]
     if on_prem:
-        display(f"[INFO] on-prem-processing label detected: excluding 'trino' from components. Components: {components}")
+        display(f"[INFO] On-prem PR label detected: excluding 'trino' from components. Components: {components}")
     components_arg = chain.from_iterable(("--component", component) for component in components)
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
