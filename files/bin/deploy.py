@@ -167,12 +167,28 @@ def get_pr_labels(
     owner: str = "project-koku",
     repo: str = "koku",
 ) -> set[str]:
+    """Fetch PR labels from the GitHub API.
+
+    Uses ``GITHUB_TOKEN`` when set so authenticated requests get the higher
+    rate limit (5000/h). Unauthenticated calls share a 60/h per-IP quota and
+    commonly return HTTP 403 from the ephemeral cluster egress IP.
+    """
     if not pr_number:
         return set()
 
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    if token := os.environ.get("GITHUB_TOKEN", "").strip():
+        request.add_header("Authorization", f"Bearer {token}")
+
     try:
-        with urllib.request.urlopen(url) as response:
+        with urllib.request.urlopen(request) as response:
             data = json.loads(response.read())
     except HTTPError as exc:
         if exc.code == 404 and (owner, repo) != (_PR_API_FALLBACK_OWNER, _PR_API_FALLBACK_REPO):
