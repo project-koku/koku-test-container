@@ -231,6 +231,80 @@ def display(command: str | Sequence[Any]) -> None:
     print(" ".join(quoted), flush=True)
 
 
+def find_crash_looping_pods(namespace: str, prefixes: Sequence[str], max_restarts: int) -> list[tuple[str, str, int]]:
+    """Return (pod, container, restarts) for pods of the given components stuck in CrashLoopBackOff."""
+    result = subprocess.run(["oc", "get", "pods", "--namespace", namespace, "--output", "json"], capture_output=True, text=True)
+    if result.returncode != 0:
+        return []
+
+    try:
+        pods = json.loads(result.stdout).get("items", [])
+    except json.JSONDecodeError:
+        return []
+
+    crashing = []
+    for pod in pods:
+        name = pod.get("metadata", {}).get("name", "")
+        if not name.startswith(tuple(f"{prefix}-" for prefix in prefixes)):
+            continue
+
+        for status in pod.get("status", {}).get("containerStatuses") or []:
+            waiting_reason = (status.get("state", {}).get("waiting") or {}).get("reason")
+            restarts = status.get("restartCount", 0)
+            if waiting_reason == "CrashLoopBackOff" and restarts >= max_restarts:
+                crashing.append((name, status.get("name", ""), restarts))
+
+    return crashing
+
+
+def show_crash_logs(namespace: str, crashing: list[tuple[str, str, int]], limit: int = 3) -> None:
+    for pod, container, restarts in crashing[:limit]:
+        display(f"[ERROR] {pod} (container '{container}') is in CrashLoopBackOff after {restarts} restarts. Last log lines before the crash:")
+        logs = subprocess.run(
+            ["oc", "logs", pod, "--namespace", namespace, "--container", container, "--previous", "--tail", "40"],
+            capture_output=True,
+            text=True,
+        )
+        print(logs.stdout or logs.stderr, flush=True)
+
+
+def deploy(command: list[str], env: dict[str, str], namespace: str, prefixes: Sequence[str]) -> None:
+    """Run bonfire deploy, failing fast when the components under test crash-loop.
+
+    bonfire otherwise waits the whole deploy timeout (30 min by default) before it
+    reports pods that crashed in the first minutes. Healthy deploys show no
+    restarts for these pods, so a crash loop will not recover on its own.
+    Set CRASHLOOP_MAX_RESTARTS=0 to disable the check.
+    """
+    max_restarts = int(os.environ.get("CRASHLOOP_MAX_RESTARTS", "3"))
+    poll_interval = int(os.environ.get("CRASHLOOP_POLL_INTERVAL", "30"))
+
+    process = subprocess.Popen(command, env=env)
+    while True:
+        try:
+            returncode = process.wait(timeout=poll_interval)
+            break
+        except subprocess.TimeoutExpired:
+            if max_restarts <= 0 or not prefixes:
+                continue
+
+            crashing = find_crash_looping_pods(namespace, prefixes, max_restarts)
+            if crashing:
+                show_crash_logs(namespace, crashing)
+                process.terminate()
+                try:
+                    process.wait(timeout=60)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                sys.exit(
+                    f"ERROR: deploy failed early: {len(crashing)} container(s) of {', '.join(prefixes)} in CrashLoopBackOff: "
+                    + ", ".join(pod for pod, _, _ in crashing)
+                )
+
+    if returncode:
+        raise subprocess.CalledProcessError(returncode, command)
+
+
 def main() -> None:
     args = parse_args()
     namespace = args.namespace
@@ -297,7 +371,7 @@ def main() -> None:
     if args.check:
         sys.exit()
 
-    subprocess.check_call(command, env=os.environ | {"BONFIRE_NS_REQUESTER": requester})
+    deploy(command, os.environ | {"BONFIRE_NS_REQUESTER": requester}, namespace, sorted(snapshot_components))
 
 
 if __name__ == "__main__":
