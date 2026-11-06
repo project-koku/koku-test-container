@@ -50,6 +50,7 @@ class IQERunner:
         self.check_run_id = self.get_check_run_identifier
         self.build_number = self.get_build_number
         self.selenium = os.environ.get("IQE_SELENIUM", "")
+        self.masu_admin_token = (os.environ.get("MASU_ADMIN_TOKEN") or "").strip()
 
         snapshot_str = os.environ.get("SNAPSHOT", "")
         try:
@@ -139,6 +140,10 @@ class IQERunner:
         is_scheduled_onprem = os.environ.get("IS_SCHEDULED_TEST_JOB", "").lower() == "true" and "cost_ocp_on_prem" in self.iqe_marker_expression
         if get_on_prem_toggle_from_label(self.pr_labels) or is_scheduled_onprem:
             env_var_params.append("ONPREM=True")
+
+        # Forward the on-prem Masu admin shared secret to the IQE pod (COST-8059).
+        if self.masu_admin_token:
+            env_var_params.append(f"MASU_ADMIN_TOKEN={self.masu_admin_token}")
 
         return chain.from_iterable(("--env-var", var) for var in env_var_params)
 
