@@ -338,7 +338,6 @@ def main() -> None:
     extra_deploy_args = os.environ.get("EXTRA_DEPLOY_ARGS", "")
     optional_deps_method = os.environ.get("OPTIONAL_DEPS_METHOD", "hybrid")
     ref_env = os.environ.get("REF_ENV", "insights-production")
-    masu_admin_token = (os.environ.get("MASU_ADMIN_TOKEN") or "").strip()
 
     if not _should_deploy(pr_number, labels, snapshot_components):
         return
@@ -360,10 +359,6 @@ def main() -> None:
         *([] if on_prem else [
             "--set-parameter", "trino/HIVE_PROPERTIES_FILE=glue.properties",
             "--set-parameter", "trino/GLUE_PROPERTIES_FILE=hive.properties",
-        ]),
-        # On-prem Masu admin shared secret (COST-8059); harmless when ONPREM=False.
-        *([] if not masu_admin_token else [
-            "--set-parameter", f"koku/MASU_ADMIN_TOKEN={masu_admin_token}",
         ]),
         *components_arg,
         *components_with_resources_arg,
