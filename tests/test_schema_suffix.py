@@ -51,24 +51,25 @@ def make_snapshot(*components: tuple[str, str]) -> Snapshot:
     )
 
 
+def suffixes(snapshot: Snapshot, pr_number: str, bonfire_component_name: str) -> tuple[list[str], str, list[str]]:
+    env = {"BONFIRE_COMPONENT_NAME": bonfire_component_name, "PIPELINE_RUN_NAME": PIPELINE_RUN_NAME}
+    with mock.patch.dict(os.environ, env, clear=True):
+        options = deploy.get_component_options(snapshot.components, pr_number, None)
+        runner = deploy_iqe_cji.IQERunner.__new__(deploy_iqe_cji.IQERunner)
+        runner.pr_number = pr_number
+        runner.snapshot = snapshot
+        iqe = runner.schema_suffix.removeprefix("SCHEMA_SUFFIX=")
+
+    app = [o.split("SCHEMA_SUFFIX=", 1)[1] for o in options if "/SCHEMA_SUFFIX=" in o]
+    tags = [o.split("IMAGE_TAG=", 1)[1] for o in options if "/IMAGE_TAG=" in o]
+    return app, iqe, tags
+
+
 class SchemaSuffixParityTest(unittest.TestCase):
     """The app (deploy.py) and IQE (deploy-iqe-cji.py) only share a schema when SCHEMA_SUFFIX is identical."""
 
-    def suffixes(self, snapshot: Snapshot, pr_number: str, bonfire_component_name: str) -> tuple[list[str], str, list[str]]:
-        env = {"BONFIRE_COMPONENT_NAME": bonfire_component_name, "PIPELINE_RUN_NAME": PIPELINE_RUN_NAME}
-        with mock.patch.dict(os.environ, env, clear=True):
-            options = deploy.get_component_options(snapshot.components, pr_number, None)
-            runner = deploy_iqe_cji.IQERunner.__new__(deploy_iqe_cji.IQERunner)
-            runner.pr_number = pr_number
-            runner.snapshot = snapshot
-            iqe = runner.schema_suffix.removeprefix("SCHEMA_SUFFIX=")
-
-        app = [o.split("SCHEMA_SUFFIX=", 1)[1] for o in options if "/SCHEMA_SUFFIX=" in o]
-        tags = [o.split("IMAGE_TAG=", 1)[1] for o in options if "/IMAGE_TAG=" in o]
-        return app, iqe, tags
-
     def assert_parity(self, snapshot: Snapshot, pr_number: str, bonfire_component_name: str, suffix: str, tag: str) -> None:
-        app, iqe, tags = self.suffixes(snapshot, pr_number, bonfire_component_name)
+        app, iqe, tags = suffixes(snapshot, pr_number, bonfire_component_name)
         self.assertEqual(app, [suffix])
         self.assertEqual(iqe, suffix)
         self.assertEqual(tags, [tag])
