@@ -51,6 +51,17 @@ def get_schema_run_identifier() -> str:
     return get_check_run_identifier()
 
 
+def get_schema_suffix(revision: str, pr_number: str | None) -> str:
+    """Return the SCHEMA_SUFFIX value (including the leading ``_``) shared by the app and the IQE run.
+
+    deploy.py (app) and deploy-iqe-cji.py (tests) must both build it with this function: they only
+    share a Postgres schema when the suffix is identical. Keep it independent of the image tag
+    prefix, which depends on how each component is built (the on-prem PR image has no ``pr-`` prefix).
+    """
+    prefix = f"pr-{pr_number}-" if pr_number else ""
+    return f"_{prefix}{revision[:7]}_{get_schema_run_identifier()}"
+
+
 def get_batch_size_from_label(labels: set[str] | None) -> str | None:
     """Search labels for 'adjust-batch-size=VALUE' and return VALUE if valid."""
     if not labels:
@@ -80,7 +91,6 @@ def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
 def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
     """Build bonfire options for each component in the snapshot."""
     built_component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or ""
-    schema_run_id = get_schema_run_identifier()
     batch_size_value = get_batch_size_from_label(labels)
     on_prem_toggle = get_on_prem_toggle_from_label(labels)
     result = []
@@ -111,7 +121,7 @@ def get_component_options(components: list[Component], pr_number: str | None = N
         if component_name == "koku":
             result.extend((
                 "--set-parameter",
-                f"{component_name}/SCHEMA_SUFFIX=_{prefix}{revision}_{schema_run_id}",
+                f"{component_name}/SCHEMA_SUFFIX={get_schema_suffix(revision, pr_number)}",
                 "--set-parameter",
                 f"{component_name}/IQE_TEST_RUN=True",
             ))
