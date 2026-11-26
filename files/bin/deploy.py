@@ -80,19 +80,10 @@ def get_batch_size_from_label(labels: set[str] | None) -> str | None:
     return None
 
 
-def get_on_prem_toggle_from_label(labels: set[str] | None) -> bool:
-    """Search labels for 'on-prem-processing' and return True if found, False otherwise."""
-    if not labels:
-        return False
-
-    return "on-prem-processing" in labels
-
-
 def get_component_options(components: list[Component], pr_number: str | None = None, labels: set[str] | None = None) -> list[str]:
     """Build bonfire options for each component in the snapshot."""
     built_component_name = os.environ.get("BONFIRE_COMPONENT_NAME") or ""
     batch_size_value = get_batch_size_from_label(labels)
-    on_prem_toggle = get_on_prem_toggle_from_label(labels)
     result = []
 
     for component in components:
@@ -131,12 +122,6 @@ def get_component_options(components: list[Component], pr_number: str | None = N
                 result.extend((
                     "--set-parameter",
                     f"{component_name}/PARQUET_PROCESSING_BATCH_SIZE={batch_size_value}",
-                ))
-            # Adjust ONPREM toggle via ocp-on-prem-smoke-tests GITHUB label
-            if on_prem_toggle:
-                result.extend((
-                    "--set-parameter",
-                    f"{component_name}/ONPREM=True",
                 ))
     return result
 
@@ -335,10 +320,7 @@ def main() -> None:
         display("[INFO] EVENT_TYPE missing, but PR_NUMBER is set; treating run as PR context.")
     labels = get_pr_labels(pr_number, owner=owner, repo=repo) if pr_number else []
     app_name = os.environ.get("APP_NAME")
-    on_prem = get_on_prem_toggle_from_label(labels)
-    components = [c for c in os.environ.get("COMPONENTS", "").split() if not (on_prem and c == "trino")]
-    if on_prem:
-        display(f"[INFO] on-prem-processing label detected: excluding 'trino' from components. Components: {components}")
+    components = os.environ.get("COMPONENTS", "").split()
     components_arg = chain.from_iterable(("--component", component) for component in components)
     components_with_resources = os.environ.get("COMPONENTS_W_RESOURCES", "").split()
     components_with_resources_arg = chain.from_iterable(("--no-remove-resources", component) for component in components_with_resources)
@@ -366,10 +348,8 @@ def main() -> None:
         "--set-parameter", "sources-api/MIN_REPLICAS=1",
         "--set-parameter", "sources-api/BACKGROUND_WORKER_MIN_REPLICAS=0",
         "--set-parameter", "sources-api/AVAILABILITY_MIN_REPLICAS=0",
-        *([] if on_prem else [
-            "--set-parameter", "trino/HIVE_PROPERTIES_FILE=glue.properties",
-            "--set-parameter", "trino/GLUE_PROPERTIES_FILE=hive.properties",
-        ]),
+        "--set-parameter", "trino/HIVE_PROPERTIES_FILE=glue.properties",
+        "--set-parameter", "trino/GLUE_PROPERTIES_FILE=hive.properties",
         *components_arg,
         *components_with_resources_arg,
         *extra_deploy_args.split(),
