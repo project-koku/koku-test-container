@@ -29,10 +29,23 @@ from sh import oc
 MASU_ADMIN_TOKEN_SECRET = "koku-masu-admin-token"
 MASU_ADMIN_TOKEN_ENV = "MASU_ADMIN_TOKEN"
 
+ONPREM_MARKER = "cost_ocp_on_prem"
+REQUIRE_ONPREM_PR_CHECK_LABEL = "require-on-prem-pr-check"
+
 
 def redact(command: list[str]) -> list[str]:
     """Hide secret values passed as --env-var before printing the command."""
     return [f"{MASU_ADMIN_TOKEN_ENV}=***" if arg.startswith(f"{MASU_ADMIN_TOKEN_ENV}=") else arg for arg in command]
+
+
+def onprem_pr_check_skipped(pr_number: str, pr_labels: set[str]) -> bool:
+    """On-prem PR checks (marker set explicitly by the test scenario) only run when the PR asks for them."""
+    is_scheduled = os.environ.get("IS_SCHEDULED_TEST_JOB", "").lower() == "true"
+    is_onprem_scenario = ONPREM_MARKER in os.environ.get("IQE_MARKER_EXPRESSION", "")
+    if not pr_number or is_scheduled or not is_onprem_scenario:
+        return False
+
+    return REQUIRE_ONPREM_PR_CHECK_LABEL not in pr_labels
 
 
 class IQERunner:
@@ -295,6 +308,10 @@ class IQERunner:
         print(f"\nAll jobs succeeded: {job_map}", flush=True)
 
     def run(self) -> None:
+        if onprem_pr_check_skipped(self.pr_number, self.pr_labels):
+            display(f"On-prem PR check skipped. Add the '{REQUIRE_ONPREM_PR_CHECK_LABEL}' label to the PR to run it.")
+            return
+
         if self.pr_labels:
             if "run-jenkins-tests" in self.pr_labels:
                 display("PR labeled to run Jenkins tests instead of Konflux")
